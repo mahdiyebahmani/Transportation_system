@@ -1,18 +1,50 @@
 #include <iostream>
 #include <map>
+#include <fstream>
 #include "tehran.hpp"
 using namespace std;
 
 void Tehran::CreatCity()
 {
-    map <string,int> v;
-    v.insert({"chaharbagh",1});
-    v.insert({"kashani",2});
-    tehran[1][2].Set_distance(5);
-    tehran[1][2].Set_taxi(1);
-    tehran[2][1].Set_distance(5);
-    tehran[2][1].Set_taxi(1);
-    //to be continued
+    std::ifstream Taxi_in ("Taxi.txt");
+    map <string,int> find_index;
+    Path temp;
+    string origin;
+    string destination;
+    int origin_index;
+    int destination_index;
+    int distance = 0;
+
+    if(Taxi_in.is_open())
+    {
+        temp.Set_taxi(1);
+        while(Taxi_in >> origin_index >> origin >> destination_index >> destination >> distance)
+        {
+            temp.Set_origin(origin, origin_index);
+            temp.Set_destination(destination, destination_index);
+            temp.Set_distance(distance);
+            tehran[origin_index][destination_index] = temp;
+            tehran[destination_index][origin_index] = temp;
+
+            if (find_index.find(origin) == find_index.end())
+            {
+                find_index.insert({origin, origin_index});
+            }
+
+            if (find_index.find(destination) == find_index.end())
+            {
+                find_index.insert({destination, destination_index});
+            }
+        }
+    }
+
+    else 
+    cout << "Error occured while opening file"<<endl;
+}
+
+int main()
+{
+    Tehran test;
 }
 
 
