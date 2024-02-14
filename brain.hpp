@@ -4,10 +4,10 @@
 #include "path.hpp"
 using namespace std;
 
-class Tehran
+class Brain
 {
     public:
-    Tehran()
+    Brain()
     {
         CreatCity();
     }

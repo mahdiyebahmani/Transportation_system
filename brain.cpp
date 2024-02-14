@@ -4,7 +4,7 @@
 #include "tehran.hpp"
 using namespace std;
 
-void Tehran::CreatCity()
+void Brain::CreatCity()
 {
     std::ifstream Taxi_in ("Taxi.txt");
     std::ifstream Bus_in ("Bus.txt");
@@ -74,7 +74,7 @@ void Tehran::CreatCity()
 
 int main()
 {
-    Tehran test;
+    Brain test;
 }
 
 
