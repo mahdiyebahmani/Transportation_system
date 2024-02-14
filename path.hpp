@@ -1,42 +1,29 @@
-// #ifdef PATH_HPP
-// #define PATH_HPP
-#include <iostream>
-using namespace std;
+#ifdef PATH_H
+#define PATH_H
+
 class Path
 {
     public:
-    void Set_distance(int distance)
-    {
-        this -> distance = distance;
-    }
-    void Set_Bus(bool T)
-    {
-        bus = 1;
-    }
-    void Set_taxi(bool T)
-    {
-        taxi = 1;
-    }
-    void Set_origin(string origin, int origin_index)
-    {
-        this -> origin = origin;
-        this -> origin_index = origin_index;
-    }
-    void Set_destination(string destination, int destination_index )
-    {
-        this -> destination = destination;
-        this -> destination_index = destination_index;
-    }
 
+    void set_bus(bool)
+    void set_subway_and_taxi(bool)
+    void set_subway_and_taxi_dis(double)
+    void set_bus_dis(double)
+    void set_subway_line(int)
+
+    bool get_bus(bool)
+    bool get_subway_and_taxi(bool)
+    double get_subway_and_taxi_dis(double)
+    double get_bus_dis(double)
+    int get_subway_line(int);
+    
     private:
-    string origin;
-    string destination;
-    int origin_index;
-    int destination_index;
-    int distance = 0;
-    bool taxi = 0;
+    bool subway_and_taxi = 0;
     bool bus = 0;
+    double subway_and_taxi_dis;
+    double bus_dis;
+    int subway_line;
 
 };
 
-// #endif
+#endif
