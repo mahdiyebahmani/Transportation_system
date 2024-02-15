@@ -10,11 +10,11 @@ class Brain
     public:
     
     void createCity();
-    
 
     private:
-
+    int stationsCount;
     map< pair<int,int>, Path > stations;
+    bool adjencencyMatrix**;
 
 };
 

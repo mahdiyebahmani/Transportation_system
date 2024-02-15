@@ -6,8 +6,20 @@ using namespace std;
  
 void Brain::createCity()
 {
+    //read station count
+    std::ifstream stationsFile("stations.txt");
+    if(stationsFile.is_open())
+    {
+        stationsFile >> stationsCount;
+    }
+    stationsFile.close();
+
+    adjencencyMatrix = new bool*[stationsCount];
+    for(int i=0; i < stationsCount; i++)
+       adjencencyMatrix[i] = new bool[stationsCount];
+    
+    //read taxi and subway lines
     std::ifstream taxiAndSubwayLines ("taxi_lines.txt");
-    std::ifstream busLines ("bus_lines.txt");
 
     int node0, node1, dis;
     int subwayLine;
@@ -19,6 +31,9 @@ void Brain::createCity()
             pair<int,int> key;
             pair.first = Min(node0, node1);
             pair.second = Max(node0, node1);
+            
+            adjencencyMatrix[node0][node1] = 1;
+            adjencencyMatrix[node1][node0] = 1;
 
             if (stations.find(key) == stations.end()) 
             {
@@ -41,7 +56,10 @@ void Brain::createCity()
     }else 
         cout << "Error occured while opening taxi_lines.txt"<<endl;
 
+    taxiAndSubwayLines.close();
 
+    //read bus lines
+    std::ifstream busLines ("bus_lines.txt");
     if(busLines.is_open())
     {
         while(busLines >> node0 >> node1 >> dis)
@@ -49,6 +67,9 @@ void Brain::createCity()
             pair<int,int> key;
             pair.first = Min(node0, node1);
             pair.second = Max(node0, node1);
+
+            adjencencyMatrix[node0][node1] = 1;
+            adjencencyMatrix[node1][node0] = 1;
 
             if (stations.find(key) == stations.end()) 
             {
@@ -69,4 +90,6 @@ void Brain::createCity()
         }
     }else 
         cout << "Error occured while opening bus_lines.txt"<<endl;
+
+    busLines.close();
 }
