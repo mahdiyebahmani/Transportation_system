@@ -1,74 +1,46 @@
 #include <iostream>
-#include <map>
+#include <utility>
+#include <set>
 #include <fstream>
-#include "tehran.hpp"
+#include "brain.hpp"
 using namespace std;
-
+ 
 void Brain::CreatCity()
 {
-    std::ifstream Taxi_in ("Taxi.txt");
-    std::ifstream Bus_in ("Bus.txt");
-    map <string,int> find_index;
-    Path temp;
-    string origin;
-    string destination;
-    int origin_index;
-    int destination_index;
-    int distance = 0;
+    // std::ifstream Taxi_in ("Taxi.txt");
+    // std::ifstream Bus_in ("Bus.txt");
+    // int index;
+    // string node;
+    // pair<int, string>name_index;
+    // set<pair<int,string>>set1;
+    // if(Taxi_in.is_open())
+    // {
+    //     while(Taxi_in >> node >> index )
+    //     {
+    //         name_index.first = index;
+    //         name_index.second = node;
+    //         set1.insert(name_index);
+    //     }
+    // }
 
-    if(Taxi_in.is_open())
-    {
-       
-        while(Taxi_in >> origin_index >> origin >> destination_index >> destination >> distance)
-        {
-            temp.Set_taxi(1);
-            temp.Set_origin(origin, origin_index);
-            temp.Set_destination(destination, destination_index);
-            temp.Set_distance(distance);
-            tehran[origin_index][destination_index] = temp;
-            tehran[destination_index][origin_index] = temp;
+    // else 
+    // cout << "Error occured while opening file"<<endl;
 
-            if (find_index.find(origin) == find_index.end())
-            {
-                find_index.insert({origin, origin_index});
-            }
+    // if(Bus_in.is_open())
+    // {
+    //     while(Bus_in >> node >> index )
+    //     {
+    //         name_index.first = index;
+    //         name_index.second = node;
+    //         set1.insert(name_index);
+    //     }
+    // }
 
-            if (find_index.find(destination) == find_index.end())
-            {
-                find_index.insert({destination, destination_index});
-            }
-        }
-    }
-
-    else 
-    cout << "Error occured while opening file"<<endl;
-
-
-    if(Bus_in.is_open())
-    {
-        while(Bus_in >> origin_index >> origin >> destination_index >> destination >> distance)
-        {
-            temp.Set_Bus(1);
-            temp.Set_origin(origin, origin_index);
-            temp.Set_destination(destination, destination_index);
-            temp.Set_distance(distance);
-            tehran[origin_index][destination_index] = temp;
-            tehran[destination_index][origin_index] = temp;
-
-            if (find_index.find(origin) == find_index.end())
-            {
-                find_index.insert({origin, origin_index});
-            }
-
-            if (find_index.find(destination) == find_index.end())
-            {
-                find_index.insert({destination, destination_index});
-            }
-        }
-    }
-
-    else 
-    cout << "Error occured while opening file"<<endl;
+    // else 
+    // cout << "Error occured while opening file"<<endl;
+    Path p;
+    p.read_file();
+    cout<< p.index_to_string_convertor(54) << " " << p.string_to_index_convertor("Meydan-eShohada"); 
 
 }
 
