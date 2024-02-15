@@ -23,7 +23,7 @@ void Brain::createCity()
             if (stations.find(key) == stations.end()) 
             {
                 // not found
-                Path newPath(dis,0);
+                Path newPath(dis,subwayLine);
                 stations[key] = newPath;
 
             }else 
@@ -34,6 +34,7 @@ void Brain::createCity()
                 {
                     path.set_subway_and_taxi(true);
                     path.set_subway_and_taxi_dis(dis);
+                    path.set_subway_line(subwayLine);
                 }
             }
         }
