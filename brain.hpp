@@ -1,5 +1,6 @@
-// #ifdef TEHRAN_HPP
-// #define TEHRAN_HPP
+#ifdef BRAIN_HPP
+#define BRAIN_HPP
+
 #include <iostream>
 #include "path.hpp"
 using namespace std;
@@ -7,15 +8,14 @@ using namespace std;
 class Brain
 {
     public:
-    Brain()
-    {
-        CreatCity();
-    }
-    void CreatCity();
     
+    void createCity();
+    
+
     private:
-    Path tehran[59][59]; 
+
+    map< pair<int,int>, Path > stations;
 
 };
 
-// #endif
+#endif
