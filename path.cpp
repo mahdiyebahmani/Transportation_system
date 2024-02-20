@@ -1,7 +1,6 @@
 #include "path.hpp"
 #include <fstream>
 #include <string>
-#include <map>
 #include <iostream>
 
 using namespace std;
@@ -46,27 +45,28 @@ void Path::set_subway_line(int line)
     subway_line = line;
 }
 
-bool Path::get_bus(bool t)
+bool Path::get_bus()
 {
     return bus;
 }
 
-bool Path::get_subway_and_taxi(bool t)
+bool Path::get_subway_and_taxi()
 {
     return subway_and_taxi;
 }
 
-double Path::get_subway_and_taxi_dis(double dis)
+double Path::get_subway_and_taxi_dis()
 {
     return subway_and_taxi_dis;
 }
 
-double Path::get_bus_dis(double dis)
+double Path::get_bus_dis()
 {
     return bus_dis;
 }
 
-int Path::get_subway_line(int line)
+int Path::get_subway_line()
 {
     return subway_line;
 }
+

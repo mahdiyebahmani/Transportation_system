@@ -1,7 +1,8 @@
-#ifdef BRAIN_HPP
+#ifndef BRAIN_HPP
 #define BRAIN_HPP
 
 #include <iostream>
+#include <map>
 #include "path.hpp"
 using namespace std;
 
@@ -11,10 +12,17 @@ class Brain
     
     void createCity();
 
+
+    int minDistance(int[] ,bool[]);
+
+    void dijkstra(int **, int );
+
+    int return_distance(int ,int);
+    
     private:
-    int stationsCount;
+    int stationsCount = 59;
     map< pair<int,int>, Path > stations;
-    bool adjencencyMatrix**;
+    bool **adjencencyMatrix;
 
 };
 
