@@ -99,28 +99,15 @@ void Brain::createCity()
     busLines.close();
 }
 
-
-enum v {Bus,taxi_subway};
-
-struct D_node
-{ 
-    int dis;
-    int cost;
-    int time;
-    vector<int>visited;
-    vector<v>vehicle;
-};
-
-
-int Brain::minDistance(int dist[], bool sptSet[])
+int Brain::minDistance(D_node dist[], bool sptSet[])
 {
 
 	// Initialize min value
 	int min = INT_MAX, min_index;
 
 	for (int v = 0; v < stationsCount; v++)
-		if (sptSet[v] == false && dist[v] <= min)
-			min = dist[v], min_index = v;
+		if (sptSet[v] == false && dist[v].dis <= min)
+			min = dist[v].dis, min_index = v;
 
 	return min_index;
 }
@@ -128,7 +115,7 @@ int Brain::minDistance(int dist[], bool sptSet[])
 
 void Brain::dijkstra(int **graph, int src)
 {
-	int dist[stationsCount]; // The output array. dist[i] will hold the
+	D_node dist[stationsCount]; // The output array. dist[i] will hold the
 				// shortest
 	// distance from src to i
 
@@ -140,10 +127,10 @@ void Brain::dijkstra(int **graph, int src)
 	// Initialize all distances as INFINITE and stpSet[] as
 	// false
 	for (int i = 0; i < stationsCount; i++)
-		dist[i] = INT_MAX, sptSet[i] = false;
+		dist[i].dis = INT_MAX, sptSet[i] = false;
 
 	// Distance of source vertex from itself is always 0
-	dist[src] = 0;
+	dist[src].dis = 0;
 
 	
 	// Find shortest path for all vertices
@@ -155,7 +142,7 @@ void Brain::dijkstra(int **graph, int src)
 
 		// Mark the picked vertex as processed
 		sptSet[u] = true;
-
+        dist->visited.push_back(u);
 		// Update dist value of the adjacent vertices of the
 		// picked vertex.
 		for (int v = 0; v < stationsCount; v++)
@@ -165,11 +152,8 @@ void Brain::dijkstra(int **graph, int src)
 			// weight of path from src to v through u is
 			// smaller than current value of dist[v]
 
-			if (!sptSet[v] && graph[u][v] == 1 && dist[u] != INT_MAX)
-            if(graph[u][v] == 1)
-            {
-                dist[v] = dist[u] + return_distance(u,v);
-            }
+			if (!sptSet[v] && graph[u][v] == 1 && dist[u].dis != INT_MAX && dist[u].dis + return_distance(u,v) < dist[v].dis)
+                dist[v].dis = dist[u].dis + return_distance(u,v);
 				
 	}
 

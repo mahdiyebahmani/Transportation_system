@@ -6,6 +6,19 @@
 #include "path.hpp"
 using namespace std;
 
+
+enum v {Bus,taxi_subway};
+
+struct D_node
+{ 
+    //int base;
+    int dis;
+    int cost;
+    int time;
+    vector<int>visited;
+    vector<v>vehicle;
+};
+
 class Brain
 {
     public:
@@ -13,7 +26,7 @@ class Brain
     void createCity();
 
 
-    int minDistance(int[] ,bool[]);
+    int minDistance(D_node [] ,bool[]);
 
     void dijkstra(int **, int );
 
