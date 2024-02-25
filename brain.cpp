@@ -1,6 +1,5 @@
 #include "brain.hpp"
 using namespace std;
- 
 
 bool Brain::readStations()
 {
@@ -190,80 +189,172 @@ bool Brain::createCity()
 	return 1;
 }
 
-int Brain::minDistance(D_node dist[], bool sptSet[])
+int Brain::minDistance(DijkstraNode nodes[], bool visited[])
 {
-
 	// Initialize min value
 	int min = INT_MAX, min_index;
 
 	for (int v = 0; v < stationsCount; v++)
-		if (sptSet[v] == false && dist[v].dis <= min)
-			min = dist[v].dis, min_index = v;
+		if (visited[v] == false && nodes[v].disToSource <= min)
+			min = nodes[v].disToSource, min_index = v;
 
 	return min_index;
 }
 
-
-void Brain::dijkstra(int **graph, int src)
+DijkstraNode Brain::useBus(DijkstraNode lastNode, Path path)
 {
-	D_node dist[stationsCount]; // The output array. dist[i] will hold the
-				// shortest
-	// distance from src to i
-
-	bool sptSet[stationsCount]; // sptSet[i] will be true if vertex i is
-					// included in shortest
-	// path tree or shortest distance from src to i is
-	// finalized
-
-	// Initialize all distances as INFINITE and stpSet[] as
-	// false
-	for (int i = 0; i < stationsCount; i++)
-		dist[i].dis = INT_MAX, sptSet[i] = false;
-
-	// Distance of source vertex from itself is always 0
-	dist[src].dis = 0;
-
-	
-	// Find shortest path for all vertices
-	for (int count = 0; count < stationsCount - 1; count++) {
-		// Pick the minimum distance vertex from the set of
-		// vertices not yet processed. u is always equal to
-		// src in the first iteration.
-		int u = minDistance(dist, sptSet);
-
-		// Mark the picked vertex as processed
-		sptSet[u] = true;
-        dist->visited.push_back(u);
-		// Update dist value of the adjacent vertices of the
-		// picked vertex.
-		for (int v = 0; v < stationsCount; v++)
-
-			// Update dist[v] only if is not in sptSet,
-			// there is an edge from u to v, and total
-			// weight of path from src to v through u is
-			// smaller than current value of dist[v]
-
-			if (!sptSet[v] && graph[u][v] == 1 && dist[u].dis != INT_MAX && dist[u].dis + return_distance(u,v) < dist[v].dis)
-                dist[v].dis = dist[u].dis + return_distance(u,v);
-				
+	if(lastNode.disToSource)
+	{
+		Vehicle lastVehicle = lastNode.vehicles[lastNode.vehicles.size() - 1];
+		if(lastVehicle != bus)
+		{
+			lastNode.costUntilNow += busCost;
+			lastNode.currentTimeInMinute += busDelay;
+		}
 	}
+	else
+	{
+		lastNode.costUntilNow = busCost;
+		lastNode.currentTimeInMinute = busDelay;
+	}
+	lastNode.vehicles.push_back(bus);
+	lastNode.disToSource += path.getBusDis();
+	lastNode.currentTimeInMinute += path.getBusDis() * busDuration;
 
+	return lastNode;
 }
 
-
-int Brain::return_distance(int u , int v)
+DijkstraNode Brain::useTaxi(DijkstraNode lastNode, Path path)
 {
-    pair<int,int>key;
-    key.first = u;
-    key.second = v; 
+	if(lastNode.disToSource)
+	{
+		Vehicle lastVehicle = lastNode.vehicles[lastNode.vehicles.size() - 1];
+		if(lastVehicle != taxi)
+		{
+			lastNode.currentTimeInMinute += taxiDelay;
+		}
+	}
+	else
+	{
+		lastNode.currentTimeInMinute = taxiDelay;
+	}
+	lastNode.vehicles.push_back(taxi);
+	lastNode.disToSource += path.getSubwayAndTaxiDis();
+	lastNode.currentTimeInMinute += path.getSubwayAndTaxiDis() * taxiDuration;
+	lastNode.costUntilNow += path.getSubwayAndTaxiDis() * subwayCost;
 
-    if (key.first > key.second )
-    {
-        if (stations[{key.first,key.second}].get_subway_and_taxi())
-        return stations[{key.first,key.second}].get_subway_and_taxi_dis();
-    }
-       
-    else
-        return stations[{key.second,key.first}].get_bus_dis();
+	return lastNode;
+}
 
+DijkstraNode Brain::useSubway(DijkstraNode lastNode, Path path)
+{
+	if(lastNode.disToSource)
+	{
+		Vehicle lastVehicle = lastNode.vehicles[lastNode.vehicles.size() - 1];
+		if(lastVehicle != subway || lastNode.lastSubwayLine != path.getSubwayLine())
+		{
+			lastNode.costUntilNow += subwayCost;
+			lastNode.currentTimeInMinute += subwayDelay;
+		}
+	}
+	else
+	{
+		lastNode.costUntilNow = subwayCost;
+		lastNode.currentTimeInMinute = subwayDelay;
+	}
+	lastNode.vehicles.push_back(subway);
+	lastNode.disToSource += path.getSubwayAndTaxiDis();
+	lastNode.currentTimeInMinute += path.getSubwayAndTaxiDis() * subwayDuration;
+
+	return lastNode;
+}
+
+void Brain::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode)
+{
+	pair<int,int> pathKey(min(u,v), max(u,v));
+	Path path = paths[pathKey];
+
+
+	//between bus path and subway/taxi path select min
+	Vehicle vehicle;
+	int busDis = path.getBusDis();
+	int subwayDis = path.getSubwayAndTaxiDis();
+
+	if(busDis && subwayDis)
+	{
+		if(busDis < subwayDis)
+			vehicle = bus;
+		else if(busDis > subwayDis)
+			vehicle = subway;
+		else{
+			if(currentNode.vehicles.size() > 0 && currentNode.vehicles[currentNode.vehicles.size()-1] == bus)
+				vehicle = bus;
+			else
+				vehicle = subway;
+		}
+	}
+	else if(busDis)
+		vehicle = bus;
+	else
+		vehicle = subway;
+
+	//check if new path is better or not
+	if(vehicle == bus)
+	{
+		//distance base
+		if(busDis + currentNode.disToSource < nextNode.disToSource)
+		{
+			currentNode.paths.push_back(v);
+			nextNode = useBus(currentNode,path);
+		}
+
+	}
+	else
+	{
+		//distance base
+		if(subwayDis + currentNode.disToSource < nextNode.disToSource)
+		{
+			currentNode.paths.push_back(v);
+			nextNode = useSubway(currentNode,path);
+		}
+	}
+}
+
+DijkstraNode Brain::dijkstra(int src, int des)
+{
+	cout << "starting dijkstra algorithm" << endl;
+
+	DijkstraNode nodes[stationsCount];
+
+	bool visited[stationsCount];
+
+	for (int i = 0; i < stationsCount; i++)
+		nodes[i].disToSource = INT_MAX, visited[i] = false;
+
+	// Distance of source vertex from itself is always 0
+	nodes[src].disToSource = 0;
+
+	// Find shortest path for all vertices
+	cout << "finding shortest path for all stations..." << endl;
+	for (int count = 0; count < stationsCount; count++) {
+
+		// Find the lowest between nodes that are not visited
+		int u = minDistance(nodes, visited);
+
+		// Mark the picked vertex as processed
+		visited[u] = true;
+
+		// Update node value of the adjacent vertices of the picked vertex.
+		for (int v = 0; v < stationsCount; v++)
+		{
+			// Update node[v]
+			if (adjencencyMatrix[u][v] && !visited[v])
+			{
+				updateNode(u, v, nodes[u], nodes[v]);
+			}
+		}
+	}
+
+	cout << "return answer" << endl;
+	return nodes[des];
 }
