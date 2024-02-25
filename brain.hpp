@@ -2,7 +2,13 @@
 #define BRAIN_HPP
 
 #include <iostream>
+#include <utility>
+#include <fstream>
+#include <climits>
 #include <map>
+#include <vector>
+#include <string>
+#include <algorithm>
 #include "path.hpp"
 using namespace std;
 
