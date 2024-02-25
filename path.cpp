@@ -1,72 +1,43 @@
 #include "path.hpp"
-#include <fstream>
-#include <string>
-#include <iostream>
-
 using namespace std;
 
 Path::Path(){}
 
-Path::Path(int busDis)
+Path::Path(Vehicle v, int dis, int line)
 {
-    set_bus(true);
-    set_bus_dis(busDis);
+    setPath(v,dis,line);
 }
 
-Path::Path(int subwayAndTaxiDis, int subwayLine)
+void Path::setPath(Vehicle v, int dis, int line)
 {
-    set_subway_and_taxi(true);
-    set_subway_and_taxi_dis(subwayAndTaxiDis);
-    set_subway_line(subway_line);
+    if(v == bus)
+    {
+        busDis = dis;
+        busLine = line;
+    }
+    else 
+    {
+        subwayAndTaxiDis = dis;
+        subwayLine = line;
+    }
 }
 
-void Path::set_bus(bool t)
+int Path::getBusDis()
 {
-    bus = t;
+    return busDis;
 }
 
-void Path::set_subway_and_taxi(bool t)
+int Path::getSubwayAndTaxiDis()
 {
-    subway_and_taxi = t;
+    return subwayAndTaxiDis;
 }
 
-void Path::set_subway_and_taxi_dis(double dis)
+int Path::getBusLine()
 {
-    subway_and_taxi_dis = dis;
+    return busLine;
 }
 
-void Path::set_bus_dis(double dis)
+int Path::getSubwayLine()
 {
-    bus_dis = dis;
+    return subwayLine;
 }
-
-void Path::set_subway_line(int line)
-{
-    subway_line = line;
-}
-
-bool Path::get_bus()
-{
-    return bus;
-}
-
-bool Path::get_subway_and_taxi()
-{
-    return subway_and_taxi;
-}
-
-double Path::get_subway_and_taxi_dis()
-{
-    return subway_and_taxi_dis;
-}
-
-double Path::get_bus_dis()
-{
-    return bus_dis;
-}
-
-int Path::get_subway_line()
-{
-    return subway_line;
-}
-
