@@ -10,19 +10,17 @@
 #include <string>
 #include <algorithm>
 #include "path.hpp"
-using namespace std;
 
 
-enum v {Bus,taxi_subway};
-
-struct D_node
-{ 
-    //int base;
-    int dis;
-    int cost;
-    int time;
-    vector<int>visited;
-    vector<v>vehicle;
+struct DijkstraNode
+{
+    DijkstraNode(): costUntilNow{0}{}
+    int disToSource;
+    int currentTimeInMinute;
+    int costUntilNow;
+    std::vector<int> paths;
+    std::vector<Vehicle> vehicles;
+    int lastSubwayLine;
 };
 
 class Brain
@@ -44,8 +42,9 @@ class Brain
     bool readTSLines();
     bool readBusLines();
 
-    int stationsCount = 59;
-    map< pair<int,int>, Path > stations;
+    int stationsCount;
+    std::string* stations;
+    std::map< std::pair<int,int>, Path > paths;
     bool **adjencencyMatrix;
 
 };
