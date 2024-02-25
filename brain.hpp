@@ -23,7 +23,7 @@ class Brain
 {
     public:
     
-    void createCity();
+    bool createCity();
 
 
     int minDistance(D_node [] ,bool[]);
@@ -33,6 +33,11 @@ class Brain
     int return_distance(int ,int);
     
     private:
+
+    bool readStations();
+    bool readTSLines();
+    bool readBusLines();
+
     int stationsCount = 59;
     map< pair<int,int>, Path > stations;
     bool **adjencencyMatrix;

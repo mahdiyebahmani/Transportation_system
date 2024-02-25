@@ -8,31 +8,68 @@
 using namespace std;
  
 
-void Brain::createCity()
+bool Brain::readStations()
 {
-    //read station count
+	cout << "reading stations..." << endl;
+
     std::ifstream stationsFile("stations.txt");
+
     if(stationsFile.is_open())
     {
+        stationsFile >> stationsCount;
 
-        stationsFile >> stationsCount;     
+		if(stationsCount < 2)
+		{
+        	throw "can't create city with " + to_string(stationsCount) + " stations!";
+			return 0;
+		}
+		
+		stations = new string[stationsCount];
+
+		int index;
+		string name;
+		int lineCount = 0, arrayIndex = 0;
+
+		while(stationsFile >> index >> name)
+		{
+			if(index != arrayIndex)
+			{
+				throw "index in line " + to_string(lineCount) + " isn't continuable!";
+				return 0;
+			}
+			
+			stations[arrayIndex] = name;
+			arrayIndex++;
+			lineCount++;
+		}
+
+		stationsFile.close();
+
+		cout << "found " << stationsCount << " stations." << endl;
+		return 1;
     }
-    stationsFile.close();
+	else
+	{
+        throw "can't open stations.txt";
+		return 0;
+	}
+}
 
-    adjencencyMatrix = new bool*[stationsCount];
-    for(int i=0; i < stationsCount; i++)
-       adjencencyMatrix[i] = new bool[stationsCount];
-    
-    //read taxi and subway lines
-    std::ifstream taxiAndSubwayLines ("taxi_lines.txt");
-
-    int node0, node1, dis;
-    int subwayLine;
-
+bool Brain::readTSLines()
+{
+	cout << "reading taxi/subway lines..." << endl;
+	std::ifstream taxiAndSubwayLines ("taxi_lines.txt");
+	
     if(taxiAndSubwayLines.is_open())
     {
-        while(taxiAndSubwayLines >> node0 >> node1 >> dis >> subwayLine)
+		int taxiLinesCount = 0;	
+		int node0, node1, dis;
+		int line;
+
+        while(taxiAndSubwayLines >> node0 >> node1 >> dis >> line)
         {
+			taxiLinesCount++;
+
             pair<int,int> key;
             key.first = min(node0, node1);
             key.second = max(node0, node1);
@@ -40,35 +77,47 @@ void Brain::createCity()
             adjencencyMatrix[node0][node1] = 1;
             adjencencyMatrix[node1][node0] = 1;
 
-            if (stations.find(key) == stations.end()) 
+            if (paths.find(key) == paths.end()) 
             {
                 // not found
-                Path newPath(dis,subwayLine);
-                stations[key] = newPath;
+                Path newPath(subway,dis,line);
+                paths[key] = newPath;
 
             }else 
             {
                 // found
-                Path path = stations[key];
-                if(path.get_subway_and_taxi() == 0)
-                {
-                    path.set_subway_and_taxi(true);
-                    path.set_subway_and_taxi_dis(dis);
-                    path.set_subway_line(subwayLine);
-                }
+				paths[key].setPath(subway, dis, line);
             }
         }
-    }else 
-        cout << "Error occured while opening taxi_lines.txt"<<endl;
 
-    taxiAndSubwayLines.close();
+		taxiAndSubwayLines.close();
 
-    //read bus lines
+		cout << "found " + to_string(taxiLinesCount) + " taxi/subway lines." << endl;
+		return 1;
+	}
+	else 
+	{
+        throw "can't open taxi_lines.txt";
+		return 0;
+	}
+}
+
+bool Brain::readBusLines()
+{
+	cout << "reading bus lines..." << endl;
+
     std::ifstream busLines ("bus_lines.txt");
+
     if(busLines.is_open())
     {
-        while(busLines >> node0 >> node1 >> dis)
+		int busLinesCount = 0;
+		int node0, node1, dis;
+		int line;
+
+        while(busLines >> node0 >> node1 >> dis >> line)
         {
+			busLinesCount++;
+
             pair<int,int> key;
             key.first = min(node0, node1);
             key.second = max(node0, node1);
@@ -76,27 +125,75 @@ void Brain::createCity()
             adjencencyMatrix[node0][node1] = 1;
             adjencencyMatrix[node1][node0] = 1;
 
-            if (stations.find(key) == stations.end()) 
+            if (paths.find(key) == paths.end()) 
             {
                 // not found
-                Path newPath(0,dis);
-                stations[key] = newPath;
+                Path newPath(bus, dis, line);
+                paths[key] = newPath;
 
             }else 
             {
                 // found
-                Path path = stations[key];
-                if(path.get_bus() == 0)
-                {
-                    path.set_bus(true);
-                    path.set_bus_dis(dis);
-                }
+                paths[key].setPath(bus, dis, line);
             }
         }
-    }else 
-        cout << "Error occured while opening bus_lines.txt"<<endl;
 
-    busLines.close();
+		busLines.close();
+
+		cout << "found " << busLinesCount << " bus lines." << endl;
+		return 1;
+
+    }else 
+	{
+        throw "can't open bus_lines.txt";
+		return 0;
+	}
+
+}
+
+bool Brain::createCity()
+{
+	cout << "creating city" << endl;
+
+    //read stations
+	try
+	{
+		readStations();
+		//set size of adjencency matrix
+		adjencencyMatrix = new bool*[stationsCount];
+		for(int i=0; i < stationsCount; i++)
+		{
+			adjencencyMatrix[i] = new bool[stationsCount];
+			for(int j=0; j < stationsCount; j++)
+				adjencencyMatrix[i][j] = 0;
+		}
+	}
+	catch(string e)
+	{
+		cout << "* Error while reading stations:\n\t" << e << endl;
+	}
+
+	//read taxi/subway lines
+	try
+	{
+		readTSLines();
+	}
+	catch(string e)
+	{
+		cout << "* Error while reading taxi/subway lines:\n\t" << e << endl;
+	}
+
+	//read taxi/subway lines
+	try
+	{
+		readBusLines();
+	}
+	catch(string e)
+	{
+		cout << "* Error while reading bus lines:\n\t" << e << endl;
+	}
+
+	return 1;
 }
 
 int Brain::minDistance(D_node dist[], bool sptSet[])
