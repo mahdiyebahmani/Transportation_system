@@ -11,9 +11,11 @@
 #include <algorithm>
 #include "path.hpp"
 
+
 struct DijkstraNode
 {
     DijkstraNode(): costUntilNow{0}{}
+    int base;
     int disToSource;
     int currentTimeInMinute;
     int costUntilNow;
@@ -25,9 +27,9 @@ struct DijkstraNode
 class Brain
 {
     public:
-    
+    Brain();
     bool createCity();
-    DijkstraNode dijkstra(int, int);
+    DijkstraNode dijkstra(int, int,int );
 
     private:
     
@@ -39,8 +41,7 @@ class Brain
     DijkstraNode useBus(DijkstraNode, Path);
     DijkstraNode useTaxi(DijkstraNode, Path);
     DijkstraNode useSubway(DijkstraNode, Path);
-    void updateNode(int&, int&, DijkstraNode, DijkstraNode&);
-
+    void updateNode(int&, int&, DijkstraNode, DijkstraNode&,int);
     int stationsCount;
     std::string* stations;
     std::map< std::pair<int,int>, Path > paths;
