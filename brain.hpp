@@ -11,7 +11,6 @@
 #include <algorithm>
 #include "path.hpp"
 
-
 struct DijkstraNode
 {
     DijkstraNode(): costUntilNow{0}{}
@@ -27,9 +26,9 @@ struct DijkstraNode
 class Brain
 {
     public:
-    Brain();
+    
     bool createCity();
-    DijkstraNode dijkstra(int, int,int );
+    DijkstraNode dijkstra(int, int, int);
 
     private:
     
@@ -38,10 +37,16 @@ class Brain
     bool readBusLines();
     
     int minDistance(DijkstraNode*, bool*);
+    int minCost(DijkstraNode* , bool*);
+    int minTime(DijkstraNode* , bool*);
+
     DijkstraNode useBus(DijkstraNode, Path);
     DijkstraNode useTaxi(DijkstraNode, Path);
     DijkstraNode useSubway(DijkstraNode, Path);
-    void updateNode(int&, int&, DijkstraNode, DijkstraNode&,int);
+    void updateNodeDistance(int&, int&, DijkstraNode, DijkstraNode&);
+    void updateNodeTime(int&, int&, DijkstraNode, DijkstraNode&);
+    void updateNodeCost(int&, int&, DijkstraNode, DijkstraNode&);
+
     int stationsCount;
     std::string* stations;
     std::map< std::pair<int,int>, Path > paths;

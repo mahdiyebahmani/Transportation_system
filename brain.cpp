@@ -1,11 +1,6 @@
 #include "brain.hpp"
 using namespace std;
 
-Brain::Brain()
-{
-	createCity();
-}
-
 bool Brain::readStations()
 {
 	cout << "reading stations..." << endl;
@@ -46,7 +41,6 @@ bool Brain::readStations()
 		cout << "found " << stationsCount << " stations." << endl;
 		return 1;
     }
-	
 	else
 	{
         throw "can't open stations.txt";
@@ -201,12 +195,33 @@ int Brain::minDistance(DijkstraNode nodes[], bool visited[])
 	int min = INT_MAX, min_index;
 
 	for (int v = 0; v < stationsCount; v++)
-		if (visited[v] == false && nodes[v].base <= min)
-			min = nodes[v].base, min_index = v;
+		if (visited[v] == false && nodes[v].disToSource <= min)
+			min = nodes[v].disToSource, min_index = v;
 
 	return min_index;
 }
 
+int Brain::minCost(DijkstraNode nodes[], bool visited[])
+{
+	int min = INT_MAX, min_index;
+
+	for (int v = 0; v < stationsCount; v++)
+		if (visited[v] == false && nodes[v].costUntilNow <= min)
+			min = nodes[v].costUntilNow, min_index = v;
+
+	return min_index;
+}
+
+int Brain::minTime(DijkstraNode nodes[], bool visited[])
+{
+	int min = INT_MAX, min_index;
+
+	for (int v = 0; v < stationsCount; v++)
+		if (visited[v] == false && nodes[v].currentTimeInMinute <= min)
+			min = nodes[v].currentTimeInMinute, min_index = v;
+
+	return min_index;
+}
 
 DijkstraNode Brain::useBus(DijkstraNode lastNode, Path path)
 {
@@ -269,7 +284,6 @@ DijkstraNode Brain::useSubway(DijkstraNode lastNode, Path path)
 		lastNode.costUntilNow = subwayCost;
 		lastNode.currentTimeInMinute = subwayDelay;
 	}
-	
 	lastNode.vehicles.push_back(subway);
 	lastNode.disToSource += path.getSubwayAndTaxiDis();
 	lastNode.currentTimeInMinute += path.getSubwayAndTaxiDis() * subwayDuration;
@@ -277,108 +291,144 @@ DijkstraNode Brain::useSubway(DijkstraNode lastNode, Path path)
 	return lastNode;
 }
 
-void Brain::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode,int base)
+void Brain::updateNodeDistance(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode)
 {
 	pair<int,int> pathKey(min(u,v), max(u,v));
 	Path path = paths[pathKey];
 
+
 	//between bus path and subway/taxi path select min
 	Vehicle vehicle;
+	int busDis = path.getBusDis();
+	int subwayDis = path.getSubwayAndTaxiDis();
 
-	int busParameter, subwayParameter,taxiParameter;
-
-	busParameter = path.getBusDis();
-	subwayParameter = path.getSubwayAndTaxiDis();
-	taxiParameter = path.getSubwayAndTaxiDis();
-
-	//time based
-	if(base == 2)
+	if(busDis && subwayDis)
 	{
-		busParameter *= busDuration;
-		taxiParameter *= taxiDuration;
-		subwayParameter *= subwayDuration; 
-	}
-	//cost base
-	if(base == 3)
-	{
-		busParameter *= busCost;
-		taxiParameter *= taxiCost;
-		subwayParameter *= subwayCost;
-	}
-	
-
-	if(busParameter !=0 && subwayParameter!=0 && taxiParameter!=0 )
-	{
-		int minimume = min (busParameter,taxiParameter,subwayParameter);
-
-		if(minimume == busParameter)
+		if(busDis < subwayDis)
 			vehicle = bus;
-			
-		else if(minimume == subwayParameter)
+		else if(busDis > subwayDis)
 			vehicle = subway;
-		
-		else if(minimume == taxiParameter)
-			vehicle = taxi;
-
-		else
-		{
+		else{
 			if(currentNode.vehicles.size() > 0 && currentNode.vehicles[currentNode.vehicles.size()-1] == bus)
 				vehicle = bus;
-
-			else if(currentNode.vehicles.size() > 0 && currentNode.vehicles[currentNode.vehicles.size()-1] == subway)
-				vehicle = subway;
-
 			else
-				vehicle = taxi;
+				vehicle = subway;
 		}
 	}
-
-	else if(busParameter)
+	else if(busDis)
 		vehicle = bus;
+	else
+		vehicle = subway;
 
-	else if(subwayParameter != 0 ; taxiParameter != 0)
-	{
-		int minimume = min(subwayParameter,taxiParameter);
-
-		if(minimume == subwayParameter)
-			vehicle = subway;
-		
-		else if(minimume == taxiParameter)
-			vehicle == taxi;
-	}
-		
 	//check if new path is better or not
 	if(vehicle == bus)
 	{
-		
-		if(busParameter + currentNode.base < nextNode.base)
+		//distance base
+		if(busDis + currentNode.disToSource < nextNode.disToSource)
 		{
 			currentNode.paths.push_back(v);
 			nextNode = useBus(currentNode,path);
 		}
+
+	}
+	else
+	{
+		//distance base
+		if(subwayDis + currentNode.disToSource < nextNode.disToSource)
+		{
+			currentNode.paths.push_back(v);
+			nextNode = useSubway(currentNode,path);
+		}
+	}
+}
+
+void Brain::updateNodeTime(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode)
+{
+	pair<int,int> pathKey(min(u,v), max(u,v));
+	Path path = paths[pathKey];
+
+
+	//between bus path and subway/taxi path select min
+	Vehicle vehicle;
+	int busTime = path.getBusDis() * busDuration;
+	int subwayTime = path.getSubwayAndTaxiDis() * subwayDuration;
+	int taxiTime = path.getSubwayAndTaxiDis() * taxiDuration;
+
+	if(busTime && taxiTime)
+	{
+		if(busTime > subwayTime && busTime > taxiTime)
+			vehicle = bus;
+
+		else if(subwayTime > busTime && subwayTime > taxiTime)
+			vehicle = subway;
+
+		else if(taxiTime > subwayTime && taxiTime > busTime)
+			vehicle = taxi;
+	}
+
+	else if(subwayTime)
+	{
+		int minimume = min(subwayTime, taxiTime);
+		if(minimume == subwayTime)
+			vehicle = subway;
+		
+		else if(minimume == taxiTime)
+			vehicle = taxi;
+	}
+
+	else 
+		vehicle = bus;
+
+
+	if(vehicle == bus)
+	{
+		if(busTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
+		{
+			currentNode.paths.push_back(v);
+			nextNode = useBus(currentNode,path);
+		}
+
 	}
 	else if(vehicle == subway)
 	{
-		
-		if(subwayParameter + currentNode.base < nextNode.base)
+		if(subwayTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
 		{
 			currentNode.paths.push_back(v);
 			nextNode = useSubway(currentNode,path);
 		}
 	}
 
-	else
+	else if(vehicle == taxi)
 	{
-		if(taxiParameter + currentNode.base < nextNode.base)
+		if(taxiTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
 		{
 			currentNode.paths.push_back(v);
 			nextNode = useTaxi(currentNode,path);
 		}
 	}
+	
+
+
 }
 
+void Brain::updateNodeCost(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode)
+{
+	pair<int,int> pathKey(min(u,v), max(u,v));
+	Path path = paths[pathKey];
 
-DijkstraNode Brain::dijkstra(int src, int des, int base )
+
+	//between bus path and subway/taxi path select min
+	Vehicle vehicle;
+	int buscost = path.getBusDis() * busCost;
+	int subwaycost = path.getSubwayAndTaxiDis() * subwayCost;
+	int taxicost = path.getSubwayAndTaxiDis() * taxiCost;
+
+
+//...
+
+}
+
+DijkstraNode Brain::dijkstra(int src, int des, int base)
 {
 	cout << "starting dijkstra algorithm" << endl;
 
@@ -398,21 +448,25 @@ DijkstraNode Brain::dijkstra(int src, int des, int base )
 			nodes[i].base = nodes[i].costUntilNow;
 
 		nodes[i].base = INT_MAX, visited[i] = false;
-	
 	}
 		
+
 	// Distance of source vertex from itself is always 0
 	nodes[src].base = 0;
 
-
 	// Find shortest path for all vertices
-	cout << "finding shortest path/least time/lowest cost for all stations..." << endl;
-	for (int count = 0; count < stationsCount; count++)
-	{
-
+	cout << "finding shortest path for all stations..." << endl;
+	for (int count = 0; count < stationsCount; count++) {
+		int u;
 		// Find the lowest between nodes that are not visited
-		int u = minDistance(nodes, visited);
+		if(base == 1)
+			u = minDistance(nodes, visited);
 
+		else if(base == 2)
+			u = minCost(nodes, visited);
+
+		else if(base == 3)
+			u = minTime(nodes, visited);
 
 		// Mark the picked vertex as processed
 		visited[u] = true;
@@ -423,7 +477,14 @@ DijkstraNode Brain::dijkstra(int src, int des, int base )
 			// Update node[v]
 			if (adjencencyMatrix[u][v] && !visited[v])
 			{
-				updateNode(u, v, nodes[u], nodes[v],base);
+				if(base == 1)
+					updateNodeDistance(u, v, nodes[u], nodes[v]);
+
+				if(base == 2)
+					updateNodeCost(u, v, nodes[u], nodes[v]);
+
+				if(base == 3)
+					updateNodeTime(u, v, nodes[u], nodes[v]);
 			}
 		}
 	}
