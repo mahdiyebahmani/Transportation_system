@@ -1,7 +1,21 @@
 #ifndef PATH_H
 #define PATH_H
 
+#include  <vector>
+
 enum Vehicle {taxi, subway, bus};
+
+struct DijkstraNode
+{
+    DijkstraNode(): costUntilNow{0}{}
+    int disToSource;
+    int currentTimeInMinute;
+    int costUntilNow;
+    std::vector<int> paths;
+    std::vector<Vehicle> vehicles;
+    int lastSubwayLine;
+    int lastBusLine;
+};
 
 class Path
 {
