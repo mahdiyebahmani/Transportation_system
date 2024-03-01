@@ -68,7 +68,6 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	//check if new path is better or not
 	if(vehicle == bus)
 	{
-		//distance base
 		if(busTotalCost + currentNode.costUntilNow < nextNode.costUntilNow)
 		{
 			currentNode.paths.push_back(v);
@@ -76,13 +75,20 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 		}
 
 	}
-	else
+	else if(vehicle == subway)
 	{
-		//distance base
 		if(subwayTotalCost + currentNode.costUntilNow < nextNode.costUntilNow)
 		{
 			currentNode.paths.push_back(v);
 			nextNode = Navigator::useSubway(currentNode,path);
+		}
+	}
+	else
+	{
+		if(taxiTotalCost + currentNode.costUntilNow < nextNode.costUntilNow)
+		{
+			currentNode.paths.push_back(v);
+			nextNode = Navigator::useTaxi(currentNode,path);
 		}
 	}
 }

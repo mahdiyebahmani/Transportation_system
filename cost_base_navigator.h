@@ -1,12 +1,6 @@
 #ifndef COST_BASE_NAVIGATOR
 #define COST_BASE_NAVIGATOR
 
-#include <iostream>
-#include <climits>
-#include <map>
-#include <vector>
-#include <algorithm>
-#include "path.hpp"
 #include "navigator.h"
 
 class CostBaseNavigator : public Navigator
