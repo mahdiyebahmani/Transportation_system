@@ -342,6 +342,7 @@ void Brain::updateNodeDistance(int& u, int& v, DijkstraNode currentNode, Dijkstr
 	}
 }
 
+
 void Brain::updateNodeTime(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode)
 {
 	pair<int,int> pathKey(min(u,v), max(u,v));
@@ -356,129 +357,63 @@ void Brain::updateNodeTime(int& u, int& v, DijkstraNode currentNode, DijkstraNod
 	bool flag = 0 ;
 
 	Vehicle lastVehicle = currentNode.vehicles[currentNode.vehicles.size()-1];
-	
-	if(lastVehicle)
+
+	if(busTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
 	{
-		if( lastVehicle != bus)
-		busTime += busDelay;
-
-		else if(lastVehicle != subway || currentNode.lastSubwayLine != path.getSubwayLine())
-		subwayTime += subwayDelay;
-
-		else if(lastVehicle != taxi)
-		taxiTime += taxiDelay;
-
-	}
-	//first vehicle
-	else 
-		flag = 1;
-	
-	//check for vehicle
-	if(busTime && taxiTime)
-	{
-		if(flag)
-		{
-			if(busTime + busDelay > subwayTime + subwayDelay && busTime + busDelay > taxiTime + taxiDelay)
-			{
-				vehicle = bus;
-				busTime += busDelay;
-			}
-			else if(subwayTime + subwayDelay > busTime + busDelay && subwayTime + subwayDelay > taxiTime + taxiDelay )
-			{
-				vehicle = subway;
-				subwayTime += subwayDelay;
-			}
-
-			else if(taxiTime + taxiDelay > busTime + busDelay && taxiTime + taxiDelay >subwayTime + subwayDelay )
-			{
-				vehicle = taxi;
-				taxiTime += taxiDelay;
-			}
-		}
-		else 
-		{
-			if(busTime > subwayTime && busTime > taxiTime)
-			vehicle = bus;
-			
-			else if(subwayTime > busTime && subwayTime > taxiTime)
-			vehicle = subway;
-
-			else if(taxiTime > subwayTime && taxiTime > busTime)
-			vehicle = taxi;
-		}
-	}
-
-	else if(subwayTime)
-	{
-		int minimume = min(subwayTime, taxiTime);
-		if(flag)
-		{
-			if(minimume == subwayTime)
-			{
-				vehicle = subway;
-				subwayTime += subwayDelay;
-			}
-
-			else if(minimume == taxiTime)
-			{
-				vehicle = taxi;
-				taxiTime += taxiDelay;
-			}
-		}
-
-		else 
-		{
-			if(minimume == subwayTime)
-			vehicle = subway;
-
-			else if(minimume == taxiTime)
-			vehicle = taxi;
-		}		
-	}
-
-	else 
-	{
-		if(flag)
+		if(lastVehicle!= bus) 
 		{
 			busTime += busDelay;
 		}
-		vehicle = bus;
 	}
-		
-
-	if(vehicle == bus)
+	if(subwayTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
 	{
-		if(busTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
+		if(lastVehicle != subway)
 		{
-			currentNode.paths.push_back(v);
-			nextNode.vehicles.push_back(bus);
-			nextNode.disToSource += path.getBusDis();
-			nextNode.currentTimeInMinute += busTime;
-			//nextNode.costUntilNow += path.getBusDis() * busCost;
+			subwayTime += subwayDelay;
 		}
-
 	}
-	else if(vehicle == subway)
+	if(taxiTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
 	{
-		if(subwayTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
+		if(lastVehicle != taxi)
 		{
-			currentNode.paths.push_back(v);
-			nextNode.vehicles.push_back(subway);
-			nextNode.disToSource += path.getSubwayAndTaxiDis();
-			nextNode.currentTimeInMinute += subwayTime;
-		//	nextNode.costUntilNow += path.get
+			taxiTime += taxiDelay;
 		}
 	}
 
-	else if(vehicle == taxi)
+	if(busTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
 	{
-		if(taxiTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
-		{
-			currentNode.paths.push_back(v);
-			nextNode.vehicles.push_back(taxi);
-			nextNode.disToSource += path.getSubwayAndTaxiDis();
-			nextNode.currentTimeInMinute += taxiTime;
-		}
+		currentNode.paths.push_back(v);
+		nextNode.vehicles = currentNode.vehicles;
+		nextNode.vehicles.push_back(bus);
+		nextNode.disToSource = currentNode.disToSource + path.getBusDis();
+		nextNode.currentTimeInMinute = currentNode.currentTimeInMinute + busTime;
+		if(currentNode.lastBusLine == path.getBusLine())
+		nextNode.costUntilNow = busCost;
+		else
+		nextNode.costUntilNow += busCost;
+	}
+
+	if(subwayTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
+	{
+		currentNode.paths.push_back(v);
+		nextNode.vehicles = currentNode.vehicles;
+		nextNode.vehicles.push_back(subway);
+		nextNode.disToSource = nextNode.disToSource + path.getSubwayAndTaxiDis();
+		nextNode.currentTimeInMinute = nextNode.currentTimeInMinute + subwayTime;
+		if(currentNode.lastSubwayLine == path.getSubwayLine() )
+		nextNode.costUntilNow = subwayCost;
+		else 
+		nextNode.costUntilNow = currentNode.costUntilNow + subwayCost;
+	}
+	
+	if(taxiTime + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
+	{
+		currentNode.paths.push_back(v);
+		nextNode.vehicles = currentNode.vehicles;
+		nextNode.vehicles.push_back(taxi);
+		nextNode.disToSource = currentNode.disToSource + path.getSubwayAndTaxiDis();
+		nextNode.currentTimeInMinute = currentNode.currentTimeInMinute + taxiTime;
+		nextNode.costUntilNow = currentNode.costUntilNow + (path.getSubwayAndTaxiDis() * taxiCost);
 	}
 }
 
@@ -486,15 +421,65 @@ void Brain::updateNodeCost(int& u, int& v, DijkstraNode currentNode, DijkstraNod
 {
 	pair<int,int> pathKey(min(u,v), max(u,v));
 	Path path = paths[pathKey];
-
-	//between bus path and subway/taxi path select min
-	Vehicle vehicle;
+	
 	Vehicle lastvehicle = currentNode.vehicles[currentNode.vehicles.size() - 1];
 
-	//...
+	int taxiPayment = path.getSubwayAndTaxiDis() * taxiCost;
+	int busPayment = 0, subwayPayment = 0;
+	
+	if(currentNode.vehicles.empty())
+	{
+		busPayment = busCost;
+		subwayPayment = subwayCost;
+	}
+	else if(lastvehicle != bus)
+	{
+		busPayment += busCost;
+	}
+	else if(lastvehicle != subway)
+	{
+		subwayPayment += subwayDelay;
+	}
+	else if(lastvehicle != taxi)
+	{
+		taxiPayment += taxiDelay;
+	}
+	
+	if(busPayment + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
+	{
+		currentNode.paths.push_back(v);
+		nextNode.vehicles = currentNode.vehicles;
+		nextNode.vehicles.push_back(bus);
+		nextNode.disToSource = currentNode.disToSource + path.getBusDis();
+		nextNode.currentTimeInMinute = currentNode.currentTimeInMinute + (currentNode.disToSource * busDuration);
+		if(lastvehicle != bus || path.getBusLine() != currentNode.lastBusLine)
+		nextNode.currentTimeInMinute += busDelay;
+		nextNode.costUntilNow = currentNode.costUntilNow + busCost;
+	}
 
-
-
+	if(subwayPayment + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
+	{
+		currentNode.paths.push_back(v);
+		nextNode.vehicles = currentNode.vehicles;
+		nextNode.vehicles.push_back(subway);
+		nextNode.disToSource = nextNode.disToSource + path.getSubwayAndTaxiDis();
+		nextNode.currentTimeInMinute = nextNode.currentTimeInMinute + (currentNode.disToSource * subwayDuration);
+		if(lastvehicle != subway || path.getSubwayLine() != currentNode.lastSubwayLine)
+		nextNode.currentTimeInMinute += subwayDelay;
+		nextNode.costUntilNow = subwayPayment;
+	}
+	
+	if(taxiPayment + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
+	{
+		currentNode.paths.push_back(v);
+		nextNode.vehicles = currentNode.vehicles;
+		nextNode.vehicles.push_back(taxi);
+		nextNode.disToSource = currentNode.disToSource + path.getSubwayAndTaxiDis();
+		nextNode.currentTimeInMinute = currentNode.currentTimeInMinute + (currentNode.disToSource * taxiDuration);
+		if(lastvehicle != taxi)
+		nextNode.currentTimeInMinute += taxiDelay;
+		nextNode.costUntilNow = currentNode.costUntilNow + (path.getSubwayAndTaxiDis() * taxiCost);
+	}
 }
 
 DijkstraNode Brain::dijkstra(int src, int des, int base)

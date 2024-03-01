@@ -21,6 +21,7 @@ struct DijkstraNode
     std::vector<int> paths;
     std::vector<Vehicle> vehicles;
     int lastSubwayLine;
+    int lastBusLine;
 };
 
 class Brain
