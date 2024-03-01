@@ -194,6 +194,7 @@ bool City::createCity()
     //create navigators
     disNavigator.init(&stationsCount, &paths, adjencencyMatrix);
     costBaseNavigator.init(&stationsCount, &paths, adjencencyMatrix);
+    timeNavigator.init(&stationsCount, &paths, adjencencyMatrix);
 	return 1;
 }
 
@@ -249,19 +250,23 @@ string City::findBestPath(string src, string des, Clock time)
 
     log << "\10-" << endl;
     log << "Best Path from " << src << " to " << des << " (time:" << time.getClockInString() << ')'<< endl;
-    log << "\nShortest Way:\n\n";
 
     //* dis base
+    log << "\nShortest Way:\n\n";
     DijkstraNode d = disNavigator.navigate(srcIndex, desIndex);
-
     log << getPathDataAsString(d, time);
 
-    log << "\nLowest Cost:\n\n";
 
     //* cost base
+    log << "\nLowest Cost:\n\n";
     d = costBaseNavigator.navigate(srcIndex, desIndex);
-
     log << getPathDataAsString(d, time);
+
+    //* time base
+    log << "\nBest Time:\n\n";
+    d = timeNavigator.navigate(srcIndex, desIndex);
+    log << getPathDataAsString(d, time);
+
 
     return log.str();
 }
