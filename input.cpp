@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <queue>
+#include "brain.cpp"
 using namespace std;
 void input()
 {
@@ -11,4 +12,5 @@ void input()
 		cin >> n;
 		input.push(n);
 	}
+	dijkstra(input.front(),input.back() ,input[1]);
 }
