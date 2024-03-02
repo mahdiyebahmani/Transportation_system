@@ -7,8 +7,8 @@ int TimeBaseNavigator::minNode(DijkstraNode nodes[], bool visited[])
 	int min = INT_MAX, min_index;
 
 	for (int v = 0; v < *stationsCount; v++)
-		if (visited[v] == false && nodes[v].currentTimeInMinute <= min)
-			min = nodes[v].currentTimeInMinute, min_index = v;
+		if (visited[v] == false && nodes[v].currentTime.getInMinute() <= min)
+			min = nodes[v].currentTime.getInMinute(), min_index = v;
 
 	return min_index;
 }
@@ -19,7 +19,6 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	pair<int,int> pathKey(min(u,v), max(u,v));
 	Path path = (*paths)[pathKey];
 
-	
 	//calculate subway, taxi and bus duration
 	int busTotalDuration = busDelay + (busDuration * path.getBusDis());
 	int subwayTotalDuration = subwayDelay + (subwayDuration * path.getSubwayAndTaxiDis());
@@ -66,11 +65,18 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	}
 	else
 		vehicle = bus;
-
+	
+	if(currentNode.currentTime.getTaxiTrafficHour())
+	taxiDuration *= 2; 
+	if(currentNode.currentTime.getBusSubwayTrafficHour())
+	{
+		subwayDuration *= 2;
+		busDuration *= 3;
+	}
 	//check if new path is better or not
 	if(vehicle == bus)
 	{
-		if(busTotalDuration + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
+		if(busTotalDuration + currentNode.currentTime.getInMinute() < nextNode.currentTime.getInMinute())
 		{
 			currentNode.paths.push_back(v);
 			nextNode = Navigator::useBus(currentNode,path);
@@ -79,7 +85,7 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	}
 	else if(vehicle = subway)
 	{
-		if(subwayTotalDuration + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
+		if(subwayTotalDuration + currentNode.currentTime.getInMinute() < nextNode.currentTime.getInMinute())
 		{
 			currentNode.paths.push_back(v);
 			nextNode = Navigator::useSubway(currentNode,path);
@@ -87,7 +93,7 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	}
     else
     {
-        if(taxiTotalDuration + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
+        if(taxiTotalDuration + currentNode.currentTime.getInMinute() < nextNode.currentTime.getInMinute())
 		{
 			currentNode.paths.push_back(v);
 			nextNode = Navigator::useTaxi(currentNode,path);
@@ -95,7 +101,7 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
     }
 }
 
-DijkstraNode  TimeBaseNavigator::navigate(int src, int des)
+DijkstraNode TimeBaseNavigator::navigate(int src, int des)
 {
     cout << "starting time base navigator..." << endl;
 
@@ -104,10 +110,12 @@ DijkstraNode  TimeBaseNavigator::navigate(int src, int des)
 	bool visited[*stationsCount];
 
 	for (int i = 0; i < *stationsCount; i++)
-		nodes[i].currentTimeInMinute = INT_MAX, visited[i] = false;
+	{
+		nodes[i].currentTime.setInfinity();
+		visited[i] = false;
+	}	
 
-
-	nodes[src].currentTimeInMinute = 0;
+	nodes[src].currentTime.setFromMinute(0);
 	nodes[src].paths.push_back(src);
 
 

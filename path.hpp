@@ -2,15 +2,15 @@
 #define PATH_H
 
 #include  <vector>
-
+#include "clock.h"
 enum Vehicle {taxi, subway, bus};
 
 struct DijkstraNode
 {
     DijkstraNode(): costUntilNow{0}{}
     int disToSource;
-    int currentTimeInMinute;
-    int costUntilNow;
+    Clock currentTime;
+    float costUntilNow;
     std::vector<int> paths;
     std::vector<Vehicle> vehicles;
     int lastSubwayLine;

@@ -20,7 +20,7 @@ class Navigator
     DijkstraNode useTaxi(DijkstraNode, Path);
     DijkstraNode useSubway(DijkstraNode, Path);
     void updateNode(int&, int&, DijkstraNode, DijkstraNode&);
-
+    
     int* stationsCount;
     std::map< std::pair<int,int>, Path >* paths;
     bool **adjencencyMatrix;

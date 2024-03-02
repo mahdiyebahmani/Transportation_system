@@ -19,7 +19,6 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	pair<int,int> pathKey(min(u,v), max(u,v));
 	Path path = (*paths)[pathKey];
 
-	
 	//calculate subway, taxi and bus cost
 	int busTotalCost = busCost;
 	int subwayTotalCost = subwayCost;
@@ -65,6 +64,14 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	else
 		vehicle = bus;
 
+	if(currentNode.currentTime.getTaxiTrafficHour())
+	taxiTotalCost *= 1.5;
+	if(currentNode.currentTime.getBusSubwayTrafficHour())
+	{
+		busTotalCost *= 2;
+		subwayTotalCost *= 3;
+	}
+
 	//check if new path is better or not
 	if(vehicle == bus)
 	{
@@ -93,7 +100,7 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	}
 }
 
-DijkstraNode  CostBaseNavigator::navigate(int src, int des)
+DijkstraNode CostBaseNavigator::navigate(int src, int des)
 {
     cout << "starting cost base navigator..." << endl;
 

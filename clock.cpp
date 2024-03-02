@@ -68,6 +68,11 @@ void Clock::setHour(int hour)
         this->hour = hour;
 }
 
+void Clock::setInfinity()
+{
+    hour = 25;
+}
+
 void Clock::addHour(int hour)
 {
     if(hour < 0)
@@ -93,6 +98,12 @@ int Clock::getHour()
 int Clock::getMinute()
 {
     return minute;
+}
+
+int Clock::getInMinute()
+{
+    int result = (hour * 60) + minute;
+    return result;
 }
 
 string Clock::getHourInString()
@@ -123,4 +134,20 @@ string Clock::getClockInString()
     s += getMinuteInString();
 
     return s;
+}
+
+bool Clock::getBusSubwayTrafficHour()
+{
+    return (hour > 6 && hour < 8);
+}   
+
+bool Clock::getTaxiTrafficHour()
+{
+    return (hour > 18 && hour < 20);
+}
+
+void Clock::sumation(Clock temp)
+{
+    addHour(temp.getHour());
+    addMinute(temp.getMinute());
 }

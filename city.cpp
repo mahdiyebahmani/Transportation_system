@@ -202,7 +202,7 @@ string City::getPathDataAsString(DijkstraNode node, Clock startClock)
 {
     stringstream log;
     
-    startClock.addMinute(node.currentTimeInMinute);
+    startClock = node.currentTime;
 
     log << "\tdistance : " << node.disToSource << " km" << endl;
     log << "\tarive time : " << startClock.getClockInString() << endl;

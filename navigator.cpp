@@ -28,17 +28,21 @@ DijkstraNode Navigator::useBus(DijkstraNode currentNode, Path path)
 		if(lastVehicle != bus)
 		{
 			currentNode.costUntilNow += busCost;
-			currentNode.currentTimeInMinute +=  busDelay;
+			currentNode.currentTime.addMinute(busDelay);
 		}
 	}
 	else
 	{
 		currentNode.costUntilNow =  busCost;
-		currentNode.currentTimeInMinute =  busDelay;
+		currentNode.currentTime.setMinute(busDelay);
 	}
+	if(currentNode.currentTime.getBusSubwayTrafficHour())
+	currentNode.currentTime.addMinute(path.getBusDis() * busDuration * 2);
+	else
+	currentNode.currentTime.addMinute(path.getBusDis() *  busDuration);
+
 	currentNode.vehicles.push_back(bus);
 	currentNode.disToSource += path.getBusDis();
-	currentNode.currentTimeInMinute += path.getBusDis() *  busDuration;
 	currentNode.lastBusLine = path.getBusLine();
 	return currentNode;
 }
@@ -50,17 +54,25 @@ DijkstraNode Navigator::useTaxi(DijkstraNode currentNode, Path path)
 		Vehicle lastVehicle = currentNode.vehicles[currentNode.vehicles.size() - 1];
 		if(lastVehicle != taxi)
 		{
-			currentNode.currentTimeInMinute +=  taxiDelay;
+			currentNode.currentTime.addMinute(taxiDelay);
 		}
 	}
 	else
 	{
-		currentNode.currentTimeInMinute =  taxiDelay;
+		currentNode.currentTime.setFromMinute(taxiDelay);
+	}
+	if(currentNode.currentTime.getTaxiTrafficHour())
+	{
+		currentNode.currentTime.addMinute(path.getSubwayAndTaxiDis() * busDuration * 2);
+		currentNode.costUntilNow += (path.getSubwayAndTaxiDis() * taxiDuration * 1.5);
+	}
+	else
+	{
+		currentNode.currentTime.addMinute(path.getSubwayAndTaxiDis() *  taxiDuration);
+		currentNode.costUntilNow += path.getSubwayAndTaxiDis() * taxiCost;
 	}
 	currentNode.vehicles.push_back(taxi);
 	currentNode.disToSource += path.getSubwayAndTaxiDis();
-	currentNode.currentTimeInMinute += path.getSubwayAndTaxiDis() *  taxiDuration;
-	currentNode.costUntilNow += path.getSubwayAndTaxiDis() *  subwayCost;
 
 	return currentNode;
 }
@@ -73,17 +85,22 @@ DijkstraNode Navigator::useSubway(DijkstraNode currentNode, Path path)
 		if(lastVehicle != subway || currentNode.lastSubwayLine != path.getSubwayLine())
 		{
 			currentNode.costUntilNow +=  subwayCost;
-			currentNode.currentTimeInMinute +=  subwayDelay;
+			currentNode.currentTime.addMinute(subwayDelay);
 		}
 	}
 	else
 	{
 		currentNode.costUntilNow =  subwayCost;
-		currentNode.currentTimeInMinute =  subwayDelay;
+		currentNode.currentTime.setFromMinute(subwayDelay);
 	}
+	if(currentNode.currentTime.getBusSubwayTrafficHour())
+	currentNode.currentTime.addMinute( path.getSubwayAndTaxiDis() *  subwayDuration * 2);
+	else
+	currentNode.currentTime.addMinute( path.getSubwayAndTaxiDis() *  subwayDuration);
+
 	currentNode.vehicles.push_back(subway);
 	currentNode.disToSource += path.getSubwayAndTaxiDis();
-	currentNode.currentTimeInMinute += path.getSubwayAndTaxiDis() *  subwayDuration;
+	currentNode.currentTime.addMinute( path.getSubwayAndTaxiDis() *  subwayDuration);
 	currentNode.lastSubwayLine = path.getSubwayLine();
 	return currentNode;
 }

@@ -21,10 +21,15 @@ class Clock
     std::string getHourInString();
     std::string getMinuteInString();
     std::string getClockInString();
+    bool getBusSubwayTrafficHour();
+    bool getTaxiTrafficHour();
+    void sumation(Clock);
+    void setInfinity();
 
     private:
     int hour;
     int minute;
+
 };
 
 #endif
