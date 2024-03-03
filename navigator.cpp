@@ -20,26 +20,31 @@ int Navigator::minNode(DijkstraNode nodes[], bool visited[])
 	return min_index;
 }
 
-DijkstraNode Navigator::useBus(DijkstraNode currentNode, Path path)
+DijkstraNode Navigator::useBus(DijkstraNode currentNode, Path path, Clock startTime)
 {
-	if(currentNode.disToSource)
+	//check traffic time
+	int newDelay = busDelay;
+	startTime.addMinute(currentNode.currentTimeInMinute);
+	if(startTime.isBusSubwayTrafficHour())
+		currentNode.currentTimeInMinute += path.getBusDis() *  busDuration * 2,
+		newDelay *= 2;
+	else
+		currentNode.currentTimeInMinute += path.getBusDis() *  busDuration;
+
+	if(currentNode.vehicles.size())
 	{
 		Vehicle lastVehicle = currentNode.vehicles[currentNode.vehicles.size() - 1];
 		if(lastVehicle != bus)
 		{
 			currentNode.costUntilNow += busCost;
-			currentNode.currentTime.addMinute(busDelay);
+			currentNode.currentTimeInMinute +=  newDelay;
 		}
 	}
 	else
 	{
-		currentNode.costUntilNow =  busCost;
-		currentNode.currentTime.setMinute(busDelay);
+		currentNode.costUntilNow +=  busCost;
+		currentNode.currentTimeInMinute +=  newDelay;
 	}
-	if(currentNode.currentTime.getBusSubwayTrafficHour())
-	currentNode.currentTime.addMinute(path.getBusDis() * busDuration * 2);
-	else
-	currentNode.currentTime.addMinute(path.getBusDis() *  busDuration);
 
 	currentNode.vehicles.push_back(bus);
 	currentNode.disToSource += path.getBusDis();
@@ -47,65 +52,76 @@ DijkstraNode Navigator::useBus(DijkstraNode currentNode, Path path)
 	return currentNode;
 }
 
-DijkstraNode Navigator::useTaxi(DijkstraNode currentNode, Path path)
+DijkstraNode Navigator::useTaxi(DijkstraNode currentNode, Path path, Clock startTime)
 {
-	if(currentNode.disToSource)
+	//check traffic time
+	int newDelay = taxiDelay;
+	startTime.addMinute(currentNode.currentTimeInMinute);
+	if(startTime.isTaxiTrafficHour())
+		currentNode.currentTimeInMinute += path.getSubwayAndTaxiDis() *  taxiDuration * 2,
+		currentNode.costUntilNow += path.getSubwayAndTaxiDis() *  taxiCost * 1.5,
+		newDelay *= 2;
+	else
+		currentNode.currentTimeInMinute += path.getSubwayAndTaxiDis() *  taxiDuration,
+		currentNode.costUntilNow += path.getSubwayAndTaxiDis() *  taxiCost;
+	
+	if(currentNode.vehicles.size())
 	{
 		Vehicle lastVehicle = currentNode.vehicles[currentNode.vehicles.size() - 1];
 		if(lastVehicle != taxi)
 		{
-			currentNode.currentTime.addMinute(taxiDelay);
+			currentNode.currentTimeInMinute +=  newDelay;
 		}
 	}
 	else
 	{
-		currentNode.currentTime.setFromMinute(taxiDelay);
+		currentNode.currentTimeInMinute +=  newDelay;
 	}
-	if(currentNode.currentTime.getTaxiTrafficHour())
-	{
-		currentNode.currentTime.addMinute(path.getSubwayAndTaxiDis() * busDuration * 2);
-		currentNode.costUntilNow += (path.getSubwayAndTaxiDis() * taxiDuration * 1.5);
-	}
-	else
-	{
-		currentNode.currentTime.addMinute(path.getSubwayAndTaxiDis() *  taxiDuration);
-		currentNode.costUntilNow += path.getSubwayAndTaxiDis() * taxiCost;
-	}
+
 	currentNode.vehicles.push_back(taxi);
 	currentNode.disToSource += path.getSubwayAndTaxiDis();
 
 	return currentNode;
 }
 
-DijkstraNode Navigator::useSubway(DijkstraNode currentNode, Path path)
+DijkstraNode Navigator::useSubway(DijkstraNode currentNode, Path path, Clock startTime)
 {
-	if(currentNode.disToSource)
+	if(currentNode.vehicles.size())
 	{
 		Vehicle lastVehicle = currentNode.vehicles[currentNode.vehicles.size() - 1];
 		if(lastVehicle != subway || currentNode.lastSubwayLine != path.getSubwayLine())
 		{
 			currentNode.costUntilNow +=  subwayCost;
-			currentNode.currentTime.addMinute(subwayDelay);
+
+			//check traffic time
+			startTime.addMinute(currentNode.currentTimeInMinute);
+			if(startTime.isBusSubwayTrafficHour())
+				currentNode.currentTimeInMinute +=  subwayDelay * 3;
+			else
+				currentNode.currentTimeInMinute +=  subwayDelay;
+
 		}
 	}
 	else
 	{
-		currentNode.costUntilNow =  subwayCost;
-		currentNode.currentTime.setFromMinute(subwayDelay);
-	}
-	if(currentNode.currentTime.getBusSubwayTrafficHour())
-	currentNode.currentTime.addMinute( path.getSubwayAndTaxiDis() *  subwayDuration * 2);
-	else
-	currentNode.currentTime.addMinute( path.getSubwayAndTaxiDis() *  subwayDuration);
+		currentNode.costUntilNow +=  subwayCost;
 
+		//check traffic time
+		startTime.addMinute(currentNode.currentTimeInMinute);
+		if(startTime.isBusSubwayTrafficHour())
+			currentNode.currentTimeInMinute +=  subwayDelay * 3;
+		else
+			currentNode.currentTimeInMinute +=  subwayDelay;
+	}
+	
 	currentNode.vehicles.push_back(subway);
 	currentNode.disToSource += path.getSubwayAndTaxiDis();
-	currentNode.currentTime.addMinute( path.getSubwayAndTaxiDis() *  subwayDuration);
 	currentNode.lastSubwayLine = path.getSubwayLine();
+	currentNode.currentTimeInMinute += path.getSubwayAndTaxiDis() *  subwayDuration;
 	return currentNode;
 }
 
-void Navigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode)
+void Navigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode, Clock startTime)
 {
 	pair<int,int> pathKey(min(u,v), max(u,v));
 	Path path = (*paths)[pathKey];
@@ -141,7 +157,7 @@ void Navigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNod
 		if(busDis + currentNode.disToSource < nextNode.disToSource)
 		{
 			currentNode.paths.push_back(v);
-			nextNode = useBus(currentNode,path);
+			nextNode = useBus(currentNode,path, startTime);
 		}
 
 	}
@@ -151,12 +167,12 @@ void Navigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNod
 		if(subwayDis + currentNode.disToSource < nextNode.disToSource)
 		{
 			currentNode.paths.push_back(v);
-			nextNode = useSubway(currentNode,path);
+			nextNode = useSubway(currentNode,path, startTime);
 		}
 	}
 }
 
-DijkstraNode Navigator::navigate(int src, int des)
+DijkstraNode Navigator::navigate(int src, int des, Clock startTime)
 {
     cout << "starting dis base navigator..." << endl;
 
@@ -185,7 +201,7 @@ DijkstraNode Navigator::navigate(int src, int des)
 			// Update node[v]
 			if (adjencencyMatrix[u][v] && !visited[v])
 			{
-				updateNode(u, v, nodes[u], nodes[v]);
+				updateNode(u, v, nodes[u], nodes[v], startTime);
 			}
 		}
 	}

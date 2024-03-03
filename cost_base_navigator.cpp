@@ -14,15 +14,22 @@ int CostBaseNavigator::minNode(DijkstraNode nodes[], bool visited[])
 }
 
 
-void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode)
+void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode, Clock startTime)
 {
 	pair<int,int> pathKey(min(u,v), max(u,v));
 	Path path = (*paths)[pathKey];
 
+	
 	//calculate subway, taxi and bus cost
 	int busTotalCost = busCost;
 	int subwayTotalCost = subwayCost;
-	int taxiTotalCost = taxiCost * path.getSubwayAndTaxiDis();
+	int taxiTotalCost;
+	startTime.addMinute(currentNode.currentTimeInMinute);
+	if(startTime.isTaxiTrafficHour())
+		taxiTotalCost = path.getSubwayAndTaxiDis() *  taxiCost * 1.5;
+	else
+		taxiTotalCost = path.getSubwayAndTaxiDis() *  taxiCost;
+
 	if(currentNode.vehicles.size())
 	{
 		Vehicle lastVehicle = currentNode.vehicles[currentNode.vehicles.size()-1];
@@ -56,21 +63,13 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	}
 	else if(STAvailable)
 	{
-		if(busTotalCost < subwayTotalCost)
-			vehicle = bus;
+		if(taxiTotalCost < subwayTotalCost)
+			vehicle = taxi;
 		else
 			vehicle = subway;
 	}
 	else
 		vehicle = bus;
-
-	if(currentNode.currentTime.getTaxiTrafficHour())
-	taxiTotalCost *= 1.5;
-	if(currentNode.currentTime.getBusSubwayTrafficHour())
-	{
-		busTotalCost *= 2;
-		subwayTotalCost *= 3;
-	}
 
 	//check if new path is better or not
 	if(vehicle == bus)
@@ -78,7 +77,7 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 		if(busTotalCost + currentNode.costUntilNow < nextNode.costUntilNow)
 		{
 			currentNode.paths.push_back(v);
-			nextNode = Navigator::useBus(currentNode,path);
+			nextNode = Navigator::useBus(currentNode,path, startTime);
 		}
 
 	}
@@ -87,7 +86,7 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 		if(subwayTotalCost + currentNode.costUntilNow < nextNode.costUntilNow)
 		{
 			currentNode.paths.push_back(v);
-			nextNode = Navigator::useSubway(currentNode,path);
+			nextNode = Navigator::useSubway(currentNode,path, startTime);
 		}
 	}
 	else
@@ -95,12 +94,12 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 		if(taxiTotalCost + currentNode.costUntilNow < nextNode.costUntilNow)
 		{
 			currentNode.paths.push_back(v);
-			nextNode = Navigator::useTaxi(currentNode,path);
+			nextNode = Navigator::useTaxi(currentNode,path, startTime);
 		}
 	}
 }
 
-DijkstraNode CostBaseNavigator::navigate(int src, int des)
+DijkstraNode  CostBaseNavigator::navigate(int src, int des, Clock startTime)
 {
     cout << "starting cost base navigator..." << endl;
 
@@ -129,7 +128,7 @@ DijkstraNode CostBaseNavigator::navigate(int src, int des)
 			// Update node[v]
 			if (adjencencyMatrix[u][v] && !visited[v])
 			{
-				updateNode(u, v, nodes[u], nodes[v]);
+				updateNode(u, v, nodes[u], nodes[v], startTime);
 			}
 		}
 	}

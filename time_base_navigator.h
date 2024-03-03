@@ -6,11 +6,11 @@
 class TimeBaseNavigator : public Navigator
 {
     public:
-    DijkstraNode navigate(int, int);
+    DijkstraNode navigate(int, int, Clock);
 
     private:
     int minNode(DijkstraNode*, bool*);
-    void updateNode(int&, int&, DijkstraNode, DijkstraNode&);
+    void updateNode(int&, int&, DijkstraNode, DijkstraNode&, Clock);
 };
 
 #endif

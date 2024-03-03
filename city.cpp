@@ -202,7 +202,7 @@ string City::getPathDataAsString(DijkstraNode node, Clock startClock)
 {
     stringstream log;
     
-    startClock = node.currentTime;
+    startClock.addMinute(node.currentTimeInMinute);
 
     log << "\tdistance : " << node.disToSource << " km" << endl;
     log << "\tarive time : " << startClock.getClockInString() << endl;
@@ -253,18 +253,18 @@ string City::findBestPath(string src, string des, Clock time)
 
     //* dis base
     log << "\nShortest Way:\n\n";
-    DijkstraNode d = disNavigator.navigate(srcIndex, desIndex);
+    DijkstraNode d = disNavigator.navigate(srcIndex, desIndex, time);
     log << getPathDataAsString(d, time);
 
 
     //* cost base
     log << "\nLowest Cost:\n\n";
-    d = costBaseNavigator.navigate(srcIndex, desIndex);
+    d = costBaseNavigator.navigate(srcIndex, desIndex, time);
     log << getPathDataAsString(d, time);
 
     //* time base
     log << "\nBest Time:\n\n";
-    d = timeNavigator.navigate(srcIndex, desIndex);
+    d = timeNavigator.navigate(srcIndex, desIndex, time);
     log << getPathDataAsString(d, time);
 
 

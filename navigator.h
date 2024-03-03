@@ -7,23 +7,25 @@
 #include <vector>
 #include <algorithm>
 #include "path.hpp"
+#include "clock.h"
 
 class Navigator
 {
     public:
     void init(int* ,std::map< std::pair<int,int>, Path >*, bool**);
-    DijkstraNode navigate(int, int);
+    DijkstraNode navigate(int, int, Clock);
 
     protected:
     int minNode(DijkstraNode*, bool*);
-    DijkstraNode useBus(DijkstraNode, Path);
-    DijkstraNode useTaxi(DijkstraNode, Path);
-    DijkstraNode useSubway(DijkstraNode, Path);
-    void updateNode(int&, int&, DijkstraNode, DijkstraNode&);
-    
+    DijkstraNode useBus(DijkstraNode, Path, Clock);
+    DijkstraNode useTaxi(DijkstraNode, Path, Clock);
+    DijkstraNode useSubway(DijkstraNode, Path, Clock);
+    void updateNode(int&, int&, DijkstraNode, DijkstraNode&, Clock);
+
     int* stationsCount;
     std::map< std::pair<int,int>, Path >* paths;
     bool **adjencencyMatrix;
+    
 
     int busCost = 2250;
     int subwayCost = 3267;
