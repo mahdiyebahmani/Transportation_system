@@ -1,24 +1,38 @@
 #include "cost_base_navigator.h"
 using namespace std;
 
-int CostBaseNavigator::minNode(DijkstraNode nodes[], bool visited[])
+int CostBaseNavigator::minNode(vector<DijkstraNode> nodes[], bool visited[])
 {
 	// Initialize min value
 	int min = INT_MAX, min_index;
 
 	for (int v = 0; v < *stationsCount; v++)
-		if (visited[v] == false && nodes[v].costUntilNow <= min)
-			min = nodes[v].costUntilNow, min_index = v;
+		if (visited[v] == false && nodes[v][0].costUntilNow <= min)
+			min = nodes[v][0].costUntilNow, min_index = v;
 
 	return min_index;
 }
 
 
-void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode, Clock startTime)
+void CostBaseNavigator::updateNode(int& u, int& v, vector<DijkstraNode> currentNodes, vector<DijkstraNode>& nextNodes, Clock startTime)
 {
 	pair<int,int> pathKey(min(u,v), max(u,v));
 	Path path = (*paths)[pathKey];
 
+	DijkstraNode& currentNode = currentNodes[0];
+	for(int i{0}; i < currentNodes.size(); i++)
+	{
+		if(currentNodes[i].vehicles.size())
+		{
+			Vehicle lastVehicle = currentNodes[i].vehicles[currentNode.vehicles.size()-1];
+			if(lastVehicle == subway)
+				if(currentNodes[i].lastSubwayLine == path.getSubwayLine())
+					currentNode = currentNodes[i];
+			else if(lastVehicle == bus)
+				if(currentNodes[i].lastBusLine == path.getBusLine())
+					currentNode = currentNodes[i];
+		}
+	}
 	
 	//calculate subway, taxi and bus cost
 	int busTotalCost = busCost;
@@ -74,27 +88,37 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	//check if new path is better or not
 	if(vehicle == bus)
 	{
-		if(busTotalCost + currentNode.costUntilNow < nextNode.costUntilNow)
+		int result = busTotalCost + currentNode.costUntilNow;
+		if(result < nextNodes[0].costUntilNow)
 		{
 			currentNode.paths.push_back(v);
-			nextNode = Navigator::useBus(currentNode,path, startTime);
+			nextNodes.clear();
+			nextNodes.push_back(Navigator::useBus(currentNode,path, startTime));
+		}
+		else if(result == nextNodes[0].costUntilNow)
+		{
+			currentNode.paths.push_back(v);
+			nextNodes.push_back(Navigator::useBus(currentNode,path, startTime));
 		}
 
 	}
 	else if(vehicle == subway)
 	{
-		if(subwayTotalCost + currentNode.costUntilNow < nextNode.costUntilNow)
+		int result = subwayTotalCost + currentNode.costUntilNow;
+		if(result < nextNodes[0].costUntilNow)
 		{
 			currentNode.paths.push_back(v);
-			nextNode = Navigator::useSubway(currentNode,path, startTime);
+			nextNodes.clear();
+			nextNodes.push_back(Navigator::useSubway(currentNode,path, startTime));
 		}
 	}
 	else
 	{
-		if(taxiTotalCost + currentNode.costUntilNow < nextNode.costUntilNow)
+		if(taxiTotalCost + currentNode.costUntilNow < nextNodes[0].costUntilNow)
 		{
 			currentNode.paths.push_back(v);
-			nextNode = Navigator::useTaxi(currentNode,path, startTime);
+			nextNodes.clear();
+			nextNodes.push_back(Navigator::useTaxi(currentNode,path, startTime));
 		}
 	}
 }
@@ -103,25 +127,32 @@ DijkstraNode  CostBaseNavigator::navigate(int src, int des, Clock startTime)
 {
     cout << "starting cost base navigator..." << endl;
 
-	DijkstraNode nodes[*stationsCount];
+	vector<DijkstraNode> nodes[*stationsCount];
 
 	bool visited[*stationsCount];
 
 	for (int i = 0; i < *stationsCount; i++)
-		nodes[i].costUntilNow = INT_MAX, visited[i] = false;
+	{
+		DijkstraNode newNode;
+		newNode.costUntilNow = INT_MAX;
+		nodes[i].push_back(newNode);
+
+		visited[i] = false;
+	}
 
 	// Distance of source vertex from itself is always 0
-	nodes[src].costUntilNow = 0;
-	nodes[src].paths.push_back(src);
+	nodes[src][0].costUntilNow = 0;
+	nodes[src][0].paths.push_back(src);
 
 	// Find shortest path for all vertices
-	for (int count = 0; count < *stationsCount; count++) {
+	for (int count = 0; count < *stationsCount; count++) 
+	{
 
 		// Find the lowest between nodes that are not visited
 		int u = minNode(nodes, visited);
 		// Mark the picked vertex as processed
 		visited[u] = true;
-
+		cout << "check node "<< u << endl;
 		// Update node value of the adjacent vertices of the picked vertex.
 		for (int v = 0; v < *stationsCount; v++)
 		{
@@ -133,5 +164,5 @@ DijkstraNode  CostBaseNavigator::navigate(int src, int des, Clock startTime)
 		}
 	}
 
-	return nodes[des];
+	return nodes[des][0];
 }
