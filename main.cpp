@@ -8,7 +8,7 @@ int main()
     City city;
 
     Clock start;
-    start.setFromString("06:00");
+    start.setFromString("07:09");
 
-    cout << city.findBestPath("EmamHossein", "Meydan-eAzadi", start);
+    cout << city.findBestPath("Aghdasiyeh", "Taleghani", start);
 }

@@ -40,7 +40,7 @@ void Clock::setFromString(string clock)
         else
         {
             int num = int(ch) - 48;
-            if(num < 9 && num >= 0)
+            if(num <= 9 && num >= 0)
             {
                 if(tmp != -1)
                     tmp += num;
