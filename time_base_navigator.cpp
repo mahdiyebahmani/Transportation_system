@@ -31,12 +31,12 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	int busTotalDuration = busDelay + (busDuration * path.getBusDis());
 	int subwayTotalDuration = subwayNewDelay + (subwayDuration * path.getSubwayAndTaxiDis());
 	int taxiTotalDuration = taxiDelay + (taxiDuration * path.getSubwayAndTaxiDis());
-	if(currentNode.vehicles.size())
+	if(currentNode.vehicles.empty() == false)
 	{
-		Vehicle lastVehicle = currentNode.vehicles[currentNode.vehicles.size()-1];
-		if(lastVehicle == bus && path.getBusLine() == currentNode.lastBusLine)
+		Vehicle lastVehicle = currentNode.vehicles.top();
+		if(lastVehicle == bus && path.getBusLine() == currentNode.lines.top())
 			busTotalDuration -= busDelay;
-		else if(lastVehicle == subway && path.getSubwayLine() == currentNode.lastSubwayLine)
+		else if(lastVehicle == subway && path.getSubwayLine() == currentNode.lines.top())
 			subwayTotalDuration -= subwayNewDelay;
         else if(lastVehicle == taxi)
             taxiTotalDuration -= taxiDelay;
@@ -87,7 +87,7 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	{
 		if(busTotalDuration + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
 		{
-			currentNode.paths.push_back(v);
+			currentNode.route.push(v);
 			nextNode = Navigator::useBus(currentNode,path, startTime);
 		}
 
@@ -96,7 +96,7 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	{
 		if(subwayTotalDuration + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
 		{
-			currentNode.paths.push_back(v);
+			currentNode.route.push(v);
 			nextNode = Navigator::useSubway(currentNode,path, startTime);
 		}
 	}
@@ -104,7 +104,7 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
     {
         if(taxiTotalDuration + currentNode.currentTimeInMinute < nextNode.currentTimeInMinute)
 		{
-			currentNode.paths.push_back(v);
+			currentNode.route.push(v);
 			nextNode = Navigator::useTaxi(currentNode,path, startTime);
 		}
     }
@@ -123,7 +123,7 @@ DijkstraNode  TimeBaseNavigator::navigate(int src, int des, Clock startTime)
 
 
 	nodes[src].currentTimeInMinute = 0;
-	nodes[src].paths.push_back(src);
+	nodes[src].route.push(src);
 
 
 	for (int count = 0; count < *stationsCount; count++) {

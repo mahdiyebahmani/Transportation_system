@@ -14,7 +14,7 @@
 #include "clock.h"
 #include "dis_base_navigator.h"
 #include "cost_base_navigator.h"
-// #include "time_base_navigator.h"
+#include "time_base_navigator.h"
 
 
 class City
@@ -38,7 +38,7 @@ class City
 
     DisBaseNavigator disNavigator;
     CostBaseNavigator costBaseNavigator;
-    // TimeBaseNavigator timeNavigator;
+    TimeBaseNavigator timeNavigator;
 };
 
 #endif

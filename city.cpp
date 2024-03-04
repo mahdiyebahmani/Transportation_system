@@ -194,7 +194,7 @@ bool City::createCity()
     //create navigators
     disNavigator.init(&stationsCount, &paths, adjencencyMatrix);
     costBaseNavigator.init(&stationsCount, &paths, adjencencyMatrix);
-    // timeNavigator.init(&stationsCount, &paths, adjencencyMatrix);
+    timeNavigator.init(&stationsCount, &paths, adjencencyMatrix);
 	return 1;
 }
 
@@ -209,7 +209,6 @@ string City::getPathDataAsString(DijkstraNode node, Clock startClock)
     log << "\tcost : " << node.costUntilNow << " $" << endl;
     log << endl;
 
-    cout << node.route.size() << " vehicles:" << node.vehicles.size() << endl;
     while(!node.route.empty() && !node.vehicles.empty())
     {
         string vehicle;
@@ -269,9 +268,9 @@ string City::findBestPath(string src, string des, Clock time)
     log << getPathDataAsString(d, time);
 
     // //* time base
-    // log << "\nBest Time:\n\n";
-    // d = timeNavigator.navigate(srcIndex, desIndex, time);
-    // log << getPathDataAsString(d, time);
+    log << "\nBest Time:\n\n";
+    d = timeNavigator.navigate(desIndex, srcIndex, time);
+    log << getPathDataAsString(d, time);
 
 
     return log.str();
