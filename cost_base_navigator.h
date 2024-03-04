@@ -1,7 +1,6 @@
 #ifndef COST_BASE_NAVIGATOR
 #define COST_BASE_NAVIGATOR
 
-#include <vector>
 #include "navigator.h"
 
 class CostBaseNavigator : public Navigator
@@ -10,8 +9,9 @@ class CostBaseNavigator : public Navigator
     DijkstraNode navigate(int, int, Clock);
 
     private:
-    int minNode(std::vector<DijkstraNode>*, bool*);
-    void updateNode(int&, int&, std::vector<DijkstraNode>, std::vector<DijkstraNode>&, Clock);
+    int minNode(DijkstraNode*, bool*);
+    void updateNode(int&, int&, DijkstraNode, DijkstraNode&, Clock, DijkstraNode*);
+    void setAllLine(int&, int&, Vehicle, std::map<int,bool>&, DijkstraNode*, Clock&);
 };
 
 #endif

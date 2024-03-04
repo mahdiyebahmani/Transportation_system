@@ -209,10 +209,11 @@ string City::getPathDataAsString(DijkstraNode node, Clock startClock)
     log << "\tcost : " << node.costUntilNow << " $" << endl;
     log << endl;
 
-    for(int i{0}; i < node.paths.size()-1; i++)
+    cout << node.route.size() << " vehicles:" << node.vehicles.size() << endl;
+    while(!node.route.empty() && !node.vehicles.empty())
     {
         string vehicle;
-        switch (node.vehicles[i])
+        switch (node.vehicles.top())
         {
             case 0: vehicle = "taxi";
             break;
@@ -222,10 +223,15 @@ string City::getPathDataAsString(DijkstraNode node, Clock startClock)
             default: 
             break;
         }
+        node.vehicles.pop();
+
         log << '\t';
-        log << stations[node.paths[i]];
-        log << " --(" << vehicle <<")--> ";
-        log << stations[node.paths[i+1]] << endl;
+        log << stations[node.route.top()];
+        node.route.pop();
+
+        log << " --(" << vehicle << " line " << node.lines.top() << ")--> ";
+        node.lines.pop();
+        log << stations[node.route.top()] << endl;
     }
 
     return log.str();
@@ -253,16 +259,16 @@ string City::findBestPath(string src, string des, Clock time)
 
     //* dis base
     log << "\nShortest Way:\n\n";
-    DijkstraNode d = disNavigator.navigate(srcIndex, desIndex, time);
+    DijkstraNode d = disNavigator.navigate(desIndex, srcIndex, time);
     log << getPathDataAsString(d, time);
 
 
-    //* cost base
+    // //* cost base
     log << "\nLowest Cost:\n\n";
-    d = costBaseNavigator.navigate(srcIndex, desIndex, time);
+    d = costBaseNavigator.navigate(desIndex, srcIndex, time);
     log << getPathDataAsString(d, time);
 
-    //* time base
+    // //* time base
     // log << "\nBest Time:\n\n";
     // d = timeNavigator.navigate(srcIndex, desIndex, time);
     // log << getPathDataAsString(d, time);

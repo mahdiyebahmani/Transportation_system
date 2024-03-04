@@ -31,9 +31,9 @@ DijkstraNode Navigator::useBus(DijkstraNode currentNode, Path path, Clock startT
 	else
 		currentNode.currentTimeInMinute += path.getBusDis() *  busDuration;
 
-	if(currentNode.vehicles.size())
+	if(currentNode.vehicles.empty() == false)
 	{
-		Vehicle lastVehicle = currentNode.vehicles[currentNode.vehicles.size() - 1];
+		Vehicle lastVehicle = currentNode.vehicles.top();
 		if(lastVehicle != bus)
 		{
 			currentNode.costUntilNow += busCost;
@@ -46,9 +46,9 @@ DijkstraNode Navigator::useBus(DijkstraNode currentNode, Path path, Clock startT
 		currentNode.currentTimeInMinute +=  newDelay;
 	}
 
-	currentNode.vehicles.push_back(bus);
+	currentNode.vehicles.push(bus);
 	currentNode.disToSource += path.getBusDis();
-	currentNode.lastBusLine = path.getBusLine();
+	currentNode.lines.push(path.getBusLine());
 	return currentNode;
 }
 
@@ -65,9 +65,9 @@ DijkstraNode Navigator::useTaxi(DijkstraNode currentNode, Path path, Clock start
 		currentNode.currentTimeInMinute += path.getSubwayAndTaxiDis() *  taxiDuration,
 		currentNode.costUntilNow += path.getSubwayAndTaxiDis() *  taxiCost;
 	
-	if(currentNode.vehicles.size())
+	if(currentNode.vehicles.empty() == false)
 	{
-		Vehicle lastVehicle = currentNode.vehicles[currentNode.vehicles.size() - 1];
+		Vehicle lastVehicle = currentNode.vehicles.top();
 		if(lastVehicle != taxi)
 		{
 			currentNode.currentTimeInMinute +=  newDelay;
@@ -78,18 +78,19 @@ DijkstraNode Navigator::useTaxi(DijkstraNode currentNode, Path path, Clock start
 		currentNode.currentTimeInMinute +=  newDelay;
 	}
 
-	currentNode.vehicles.push_back(taxi);
+	currentNode.vehicles.push(taxi);
 	currentNode.disToSource += path.getSubwayAndTaxiDis();
+	currentNode.lines.push(path.getSubwayLine());
 
 	return currentNode;
 }
 
 DijkstraNode Navigator::useSubway(DijkstraNode currentNode, Path path, Clock startTime)
 {
-	if(currentNode.vehicles.size())
+	if(currentNode.vehicles.empty() == false)
 	{
-		Vehicle lastVehicle = currentNode.vehicles[currentNode.vehicles.size() - 1];
-		if(lastVehicle != subway || currentNode.lastSubwayLine != path.getSubwayLine())
+		Vehicle lastVehicle = currentNode.vehicles.top();
+		if(lastVehicle != subway || currentNode.lines.top() != path.getSubwayLine())
 		{
 			currentNode.costUntilNow +=  subwayCost;
 
@@ -114,9 +115,9 @@ DijkstraNode Navigator::useSubway(DijkstraNode currentNode, Path path, Clock sta
 			currentNode.currentTimeInMinute +=  subwayDelay;
 	}
 	
-	currentNode.vehicles.push_back(subway);
+	currentNode.vehicles.push(subway);
 	currentNode.disToSource += path.getSubwayAndTaxiDis();
-	currentNode.lastSubwayLine = path.getSubwayLine();
+	currentNode.lines.push(path.getSubwayLine());
 	currentNode.currentTimeInMinute += path.getSubwayAndTaxiDis() *  subwayDuration;
 	return currentNode;
 }
@@ -139,7 +140,7 @@ void Navigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNod
 		else if(busDis > subwayDis)
 			vehicle = subway;
 		else{
-			if(currentNode.vehicles.size() > 0 && currentNode.vehicles[currentNode.vehicles.size()-1] == bus)
+			if(currentNode.vehicles.empty() == false && currentNode.vehicles.top() == bus)
 				vehicle = bus;
 			else
 				vehicle = subway;
@@ -156,7 +157,7 @@ void Navigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNod
 		//distance base
 		if(busDis + currentNode.disToSource < nextNode.disToSource)
 		{
-			currentNode.paths.push_back(v);
+			currentNode.route.push(v);
 			nextNode = useBus(currentNode,path, startTime);
 		}
 
@@ -166,7 +167,7 @@ void Navigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNod
 		//distance base
 		if(subwayDis + currentNode.disToSource < nextNode.disToSource)
 		{
-			currentNode.paths.push_back(v);
+			currentNode.route.push(v);
 			nextNode = useSubway(currentNode,path, startTime);
 		}
 	}
@@ -185,7 +186,7 @@ DijkstraNode Navigator::navigate(int src, int des, Clock startTime)
 
 	// Distance of source vertex from itself is always 0
 	nodes[src].disToSource = 0;
-	nodes[src].paths.push_back(src);
+	nodes[src].route.push(src);
 
 	// Find shortest path for all vertices
 	for (int count = 0; count < *stationsCount; count++) {

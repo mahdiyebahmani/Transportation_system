@@ -1,125 +1,93 @@
 #include "cost_base_navigator.h"
 using namespace std;
 
-int CostBaseNavigator::minNode(vector<DijkstraNode> nodes[], bool visited[])
+int CostBaseNavigator::minNode(DijkstraNode nodes[], bool visited[])
 {
 	// Initialize min value
 	int min = INT_MAX, min_index;
 
 	for (int v = 0; v < *stationsCount; v++)
-		if (visited[v] == false && nodes[v][0].costUntilNow <= min)
-			min = nodes[v][0].costUntilNow, min_index = v;
+		if (visited[v] == false && nodes[v].costUntilNow <= min)
+			min = nodes[v].costUntilNow, min_index = v;
 
 	return min_index;
 }
 
-
-void CostBaseNavigator::updateNode(int& u, int& v, vector<DijkstraNode> currentNodes, vector<DijkstraNode>& nextNodes, Clock startTime)
+void CostBaseNavigator::setAllLine(int& line, int& nodeIndex, Vehicle v, map<int,bool>& visited, DijkstraNode nodes[], Clock& startTime)
 {
-	pair<int,int> pathKey(min(u,v), max(u,v));
-	Path path = (*paths)[pathKey];
-
-	DijkstraNode& currentNode = currentNodes[0];
-	for(int i{0}; i < currentNodes.size(); i++)
+	visited[nodeIndex] = 1;
+	//int line = nodes[nodeIndex].lines.top();
+	int cost = nodes[nodeIndex].costUntilNow;
+	for(int i = 0; i < *stationsCount; i++)
 	{
-		if(currentNodes[i].vehicles.size())
+		if(adjencencyMatrix[nodeIndex][i] && !visited[i]) 		//neighbor
 		{
-			Vehicle lastVehicle = currentNodes[i].vehicles[currentNode.vehicles.size()-1];
-			if(lastVehicle == subway)
-				if(currentNodes[i].lastSubwayLine == path.getSubwayLine())
-					currentNode = currentNodes[i];
-			else if(lastVehicle == bus)
-				if(currentNodes[i].lastBusLine == path.getBusLine())
-					currentNode = currentNodes[i];
+			pair<int,int> pathKey(min(nodeIndex,i), max(nodeIndex,i));
+			Path path = (*paths)[pathKey];
+
+			if(v == bus && line == path.getBusLine())	//same line
+			{
+				if(cost < nodes[i].costUntilNow)
+				{
+					nodes[i] = Navigator::useBus(nodes[nodeIndex], path, startTime);
+					nodes[i].route.push(i);
+				}
+				setAllLine(line, i, v, visited, nodes, startTime);
+			}
+			else if(v == subway && line == path.getSubwayLine())	//same line
+			{
+				if(cost < nodes[i].costUntilNow)
+				{
+					nodes[i] = Navigator::useSubway(nodes[nodeIndex], path, startTime);
+					nodes[i].route.push(i);
+				}
+				setAllLine(line, i, v, visited, nodes, startTime);
+			}
 		}
 	}
-	
-	//calculate subway, taxi and bus cost
-	int busTotalCost = busCost;
-	int subwayTotalCost = subwayCost;
-	int taxiTotalCost;
-	startTime.addMinute(currentNode.currentTimeInMinute);
-	if(startTime.isTaxiTrafficHour())
-		taxiTotalCost = path.getSubwayAndTaxiDis() *  taxiCost * 1.5;
-	else
-		taxiTotalCost = path.getSubwayAndTaxiDis() *  taxiCost;
+}
 
-	if(currentNode.vehicles.size())
+void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode, Clock startTime, DijkstraNode nodes[])
+{
+	if(nextNode.costUntilNow == INT_MAX)
 	{
-		Vehicle lastVehicle = currentNode.vehicles[currentNode.vehicles.size()-1];
-		if(lastVehicle == bus && path.getBusLine() == currentNode.lastBusLine)
-			busTotalCost = 0;
-		else if(lastVehicle == subway && path.getSubwayLine() == currentNode.lastSubwayLine)
-			subwayTotalCost = 0;
-	}
-	bool busAvailable = path.getBusDis();
-	bool STAvailable = path.getSubwayAndTaxiDis();
-	
-	//between bus path and subway/taxi path select min
-	Vehicle vehicle;
-	if(busAvailable && STAvailable)
-	{
-		if(busTotalCost < subwayTotalCost)
+		//use vehicle to go
+		int busTotalCost = busCost;
+		int subwayTotalCost = subwayCost;
+
+		pair<int,int> pathKey(min(u,v), max(u,v));
+		Path path = (*paths)[pathKey];
+
+		bool busAvailable = path.getBusDis();
+		bool STAvailable = path.getSubwayAndTaxiDis();
+
+		Vehicle vehicle;
+		if(busAvailable && STAvailable)
 		{
-			if(busTotalCost < taxiTotalCost)
+			if(busTotalCost < subwayTotalCost)
 				vehicle = bus;
 			else
-				vehicle = taxi;
-		}
-		else
-		{
-			if(subwayTotalCost < taxiTotalCost)
 				vehicle = subway;
-			else
-				vehicle = taxi;
 		}
-			
-	}
-	else if(STAvailable)
-	{
-		if(taxiTotalCost < subwayTotalCost)
-			vehicle = taxi;
-		else
+		else if(busAvailable)
+			vehicle = bus;
+		else 
 			vehicle = subway;
-	}
-	else
-		vehicle = bus;
+		
+		currentNode.route.push(v);
 
-	//check if new path is better or not
-	if(vehicle == bus)
-	{
-		int result = busTotalCost + currentNode.costUntilNow;
-		if(result < nextNodes[0].costUntilNow)
-		{
-			currentNode.paths.push_back(v);
-			nextNodes.clear();
-			nextNodes.push_back(Navigator::useBus(currentNode,path, startTime));
-		}
-		else if(result == nextNodes[0].costUntilNow)
-		{
-			currentNode.paths.push_back(v);
-			nextNodes.push_back(Navigator::useBus(currentNode,path, startTime));
-		}
+		int line;
 
-	}
-	else if(vehicle == subway)
-	{
-		int result = subwayTotalCost + currentNode.costUntilNow;
-		if(result < nextNodes[0].costUntilNow)
-		{
-			currentNode.paths.push_back(v);
-			nextNodes.clear();
-			nextNodes.push_back(Navigator::useSubway(currentNode,path, startTime));
-		}
-	}
-	else
-	{
-		if(taxiTotalCost + currentNode.costUntilNow < nextNodes[0].costUntilNow)
-		{
-			currentNode.paths.push_back(v);
-			nextNodes.clear();
-			nextNodes.push_back(Navigator::useTaxi(currentNode,path, startTime));
-		}
+		if(vehicle == bus)
+			nodes[v] = Navigator::useBus(currentNode,path, startTime),
+			line = path.getBusLine();
+		else
+			nodes[v] = Navigator::useSubway(currentNode,path, startTime),
+			line = path.getSubwayLine();
+
+		//set all line
+		map<int, bool> visitedInLine;
+		setAllLine(line, u, vehicle, visitedInLine, nodes, startTime);
 	}
 }
 
@@ -127,42 +95,38 @@ DijkstraNode  CostBaseNavigator::navigate(int src, int des, Clock startTime)
 {
     cout << "starting cost base navigator..." << endl;
 
-	vector<DijkstraNode> nodes[*stationsCount];
+	DijkstraNode nodes[*stationsCount];
 
 	bool visited[*stationsCount];
 
 	for (int i = 0; i < *stationsCount; i++)
 	{
-		DijkstraNode newNode;
-		newNode.costUntilNow = INT_MAX;
-		nodes[i].push_back(newNode);
+		nodes[i].costUntilNow = INT_MAX;
 
 		visited[i] = false;
 	}
 
 	// Distance of source vertex from itself is always 0
-	nodes[src][0].costUntilNow = 0;
-	nodes[src][0].paths.push_back(src);
+	nodes[src].costUntilNow = 0;
+	nodes[src].route.push(src);
 
 	// Find shortest path for all vertices
 	for (int count = 0; count < *stationsCount; count++) 
 	{
-
 		// Find the lowest between nodes that are not visited
 		int u = minNode(nodes, visited);
 		// Mark the picked vertex as processed
 		visited[u] = true;
-		cout << "check node "<< u << endl;
 		// Update node value of the adjacent vertices of the picked vertex.
 		for (int v = 0; v < *stationsCount; v++)
 		{
 			// Update node[v]
 			if (adjencencyMatrix[u][v] && !visited[v])
 			{
-				updateNode(u, v, nodes[u], nodes[v], startTime);
+				updateNode(u, v, nodes[u], nodes[v], startTime, nodes);
 			}
 		}
 	}
 
-	return nodes[des][0];
+	return nodes[des];
 }
