@@ -112,8 +112,6 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 
 DijkstraNode  TimeBaseNavigator::navigate(int src, int des, Clock startTime)
 {
-    cout << "starting time base navigator..." << endl;
-
 	DijkstraNode nodes[*stationsCount];
 
 	bool visited[*stationsCount];

@@ -253,7 +253,7 @@ string City::findBestPath(string src, string des, Clock time)
         }
     }
 
-    log << "\10-" << endl;
+    log << "---------------------------------------------------------" << endl;
     log << "Best Path from " << src << " to " << des << " (time:" << time.getClockInString() << ')'<< endl;
 
     //* dis base

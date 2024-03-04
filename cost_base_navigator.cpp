@@ -16,8 +16,8 @@ int CostBaseNavigator::minNode(DijkstraNode nodes[], bool visited[])
 void CostBaseNavigator::setAllLine(int& line, int& nodeIndex, Vehicle v, map<int,bool>& visited, DijkstraNode nodes[], Clock& startTime)
 {
 	visited[nodeIndex] = 1;
-	//int line = nodes[nodeIndex].lines.top();
 	int cost = nodes[nodeIndex].costUntilNow;
+
 	for(int i = 0; i < *stationsCount; i++)
 	{
 		if(adjencencyMatrix[nodeIndex][i] && !visited[i]) 		//neighbor
@@ -43,6 +43,21 @@ void CostBaseNavigator::setAllLine(int& line, int& nodeIndex, Vehicle v, map<int
 				}
 				setAllLine(line, i, v, visited, nodes, startTime);
 			}
+			else if(v == taxi && line == path.getSubwayLine())		//same line
+			{
+				startTime.addMinute(nodes[nodeIndex].currentTimeInMinute);
+				if(startTime.isTaxiTrafficHour())
+					cost += taxiCost * path.getSubwayAndTaxiDis() * 1.5;
+				else
+					cost += taxiCost * path.getSubwayAndTaxiDis();
+
+				if(cost < nodes[i].costUntilNow)
+				{
+					nodes[i] = Navigator::useTaxi(nodes[nodeIndex], path, startTime);
+					nodes[i].route.push(i);
+				}
+				setAllLine(line, i, v, visited, nodes, startTime);
+			}
 		}
 	}
 }
@@ -51,12 +66,18 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 {
 	if(nextNode.costUntilNow == INT_MAX)
 	{
+		pair<int,int> pathKey(min(u,v), max(u,v));
+		Path path = (*paths)[pathKey];
+
 		//use vehicle to go
 		int busTotalCost = busCost;
 		int subwayTotalCost = subwayCost;
+		int taxiTotalCost = taxiCost * path.getSubwayAndTaxiDis();
 
-		pair<int,int> pathKey(min(u,v), max(u,v));
-		Path path = (*paths)[pathKey];
+		//check traffic time
+		startTime.addMinute(currentNode.currentTimeInMinute);
+		if(startTime.isTaxiTrafficHour())
+			taxiTotalCost *= 1.5;
 
 		bool busAvailable = path.getBusDis();
 		bool STAvailable = path.getSubwayAndTaxiDis();
@@ -65,14 +86,23 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 		if(busAvailable && STAvailable)
 		{
 			if(busTotalCost < subwayTotalCost)
-				vehicle = bus;
+				if(busTotalCost < taxiTotalCost)
+					vehicle = bus;
+				else
+					vehicle = taxi;
+			else
+				if(subwayTotalCost < taxiTotalCost)
+					vehicle = subway;
+				else
+					vehicle = taxi;
+		}
+		else if(STAvailable)
+			if(taxiTotalCost < subwayTotalCost)
+				vehicle = taxi;
 			else
 				vehicle = subway;
-		}
-		else if(busAvailable)
-			vehicle = bus;
 		else 
-			vehicle = subway;
+			vehicle = bus;
 		
 		currentNode.route.push(v);
 
@@ -81,8 +111,11 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 		if(vehicle == bus)
 			nodes[v] = Navigator::useBus(currentNode,path, startTime),
 			line = path.getBusLine();
-		else
+		else if(vehicle == subway)
 			nodes[v] = Navigator::useSubway(currentNode,path, startTime),
+			line = path.getSubwayLine();
+		else 
+			nodes[v] = Navigator::useTaxi(currentNode,path, startTime),
 			line = path.getSubwayLine();
 
 		//set all line
@@ -93,8 +126,6 @@ void CostBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 
 DijkstraNode  CostBaseNavigator::navigate(int src, int des, Clock startTime)
 {
-    cout << "starting cost base navigator..." << endl;
-
 	DijkstraNode nodes[*stationsCount];
 
 	bool visited[*stationsCount];

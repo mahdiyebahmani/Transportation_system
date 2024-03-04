@@ -9,7 +9,7 @@ Semanhasht::Semanhasht()
 
 void Semanhasht::getInput()
 {
-    cout << "Enter number of requests"<<endl<<endl;
+    cout << "Enter number of requests"<<endl;
     cin >> numberOfRequests;
     for(int i = 0; i < numberOfRequests; i++)
     {   

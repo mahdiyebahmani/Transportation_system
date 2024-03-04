@@ -68,7 +68,7 @@ DijkstraNode Navigator::useTaxi(DijkstraNode currentNode, Path path, Clock start
 	if(currentNode.vehicles.empty() == false)
 	{
 		Vehicle lastVehicle = currentNode.vehicles.top();
-		if(lastVehicle != taxi)
+		if(lastVehicle != taxi || path.getSubwayLine() != currentNode.lines.top())
 		{
 			currentNode.currentTimeInMinute +=  newDelay;
 		}
@@ -175,8 +175,6 @@ void Navigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNod
 
 DijkstraNode Navigator::navigate(int src, int des, Clock startTime)
 {
-    cout << "starting dis base navigator..." << endl;
-
 	DijkstraNode nodes[*stationsCount];
 
 	bool visited[*stationsCount];
