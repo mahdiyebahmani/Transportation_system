@@ -10,7 +10,7 @@ class TimeBaseNavigator : public Navigator
 
     private:
     int minNode(DijkstraNode*, bool*);
-    void updateNode(int&, int&, DijkstraNode, DijkstraNode&, Clock);
+    void updateNode(int&, int&, DijkstraNode, DijkstraNode&, Clock, int*, bool*);
 };
 
 #endif

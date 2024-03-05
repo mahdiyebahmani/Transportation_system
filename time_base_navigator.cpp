@@ -14,7 +14,7 @@ int TimeBaseNavigator::minNode(DijkstraNode nodes[], bool visited[])
 }
 
 
-void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode, Clock startTime)
+void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, DijkstraNode& nextNode, Clock startTime, int disFromLastStation[], bool startInSubTraffic[])
 {
 	pair<int,int> pathKey(min(u,v), max(u,v));
 	Path path = (*paths)[pathKey];
@@ -31,15 +31,37 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	int busTotalDuration = busDelay + (busDuration * path.getBusDis());
 	int subwayTotalDuration = subwayNewDelay + (subwayDuration * path.getSubwayAndTaxiDis());
 	int taxiTotalDuration = taxiDelay + (taxiDuration * path.getSubwayAndTaxiDis());
+	disFromLastStation[v] = 0;
 	if(currentNode.vehicles.empty() == false)
 	{
+		bool displacement = 1;
 		Vehicle lastVehicle = currentNode.vehicles.top();
 		if(lastVehicle == bus && path.getBusLine() == currentNode.lines.top())
-			busTotalDuration -= busDelay;
+			busTotalDuration -= busDelay,
+			displacement = 0;
 		else if(lastVehicle == subway && path.getSubwayLine() == currentNode.lines.top())
-			subwayTotalDuration -= subwayNewDelay;
-        else if(lastVehicle == taxi)
-            taxiTotalDuration -= taxiDelay;
+			subwayTotalDuration -= subwayNewDelay,
+			displacement = 0;
+        else if(lastVehicle == taxi && path.getSubwayLine() == currentNode.lines.top())
+            taxiTotalDuration -= taxiDelay,
+			displacement = 0;
+
+		if(displacement)
+		{
+			if(startTime.isBusSubwayTrafficHour())
+				startInSubTraffic[v] = 1;
+		}
+		else
+		{
+			disFromLastStation[v] = disFromLastStation[u];
+			startInSubTraffic[v] = startInSubTraffic[u];
+		}
+	}
+	else
+	{
+		if(startTime.isBusSubwayTrafficHour())
+			startInSubTraffic[u] = 1,
+			startInSubTraffic[v] = 1;
 	}
 
 	//check traffic time for others
@@ -48,7 +70,7 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	if(startTime.isTaxiTrafficHour())
 		taxiTotalDuration *= 2;
 
-
+	
 	bool busAvailable = path.getBusDis();
 	bool STAvailable = path.getSubwayAndTaxiDis();
 	//between bus path and subway/taxi path select min
@@ -81,6 +103,97 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	else
 		vehicle = bus;
 
+	//check dis from last station
+	if(vehicle == bus)
+		disFromLastStation[v] += path.getBusDis();
+	else
+		disFromLastStation[v] += path.getSubwayAndTaxiDis();
+
+	if(u == 18 && v == 43)
+	{
+		cout << "taxiTotalDuration: " << taxiTotalDuration << " sub:" << subwayTotalDuration << " subTraffic: " << startInSubTraffic[u] << "disFromLastStartion: " << disFromLastStation[v] << endl;
+	}
+	if(u == 43 && v == 2)
+	{
+		cout << "taxiTotalDuration: " << taxiTotalDuration << " sub:" << subwayTotalDuration << " subTraffic: " << startInSubTraffic[u] << "disFromLastStartion: " << disFromLastStation[v] << endl;
+	}
+	if(u == 2 && v == 1)
+	{
+		cout << "taxiTotalDuration: " << taxiTotalDuration << " sub:" << subwayTotalDuration << " subTraffic: " << startInSubTraffic[u] << "disFromLastStartion: " << disFromLastStation[v] << endl;
+	}
+	if(startInSubTraffic[u])
+	{
+		if(vehicle == taxi && disFromLastStation[v] > 19)
+		{
+			//change vehcile from first of line until now to subway
+			int currentLine = currentNode.lines.top();
+			int count{0};
+			while(!currentNode.lines.empty() && currentNode.lines.top() == currentLine
+				&& currentNode.vehicles.top() == taxi)
+			{
+				currentNode.vehicles.pop();
+				currentNode.lines.pop();
+				count++;
+			}
+
+			while(count--)
+			{
+				currentNode.vehicles.push(subway);
+				currentNode.lines.push(currentLine);
+			}
+
+			//change cost from first of line until now
+			int c = (disFromLastStation[v] - path.getSubwayAndTaxiDis()) * taxiCost;
+			currentNode.costUntilNow -= c;		
+			currentNode.costUntilNow += subwayCost;
+
+			//change duration from first of line until now
+			int d = (disFromLastStation[v] - path.getSubwayAndTaxiDis()) * taxiDuration + taxiDelay;
+			currentNode.currentTimeInMinute -= d;
+			d = (disFromLastStation[v] - path.getSubwayAndTaxiDis()) * subwayDuration + subwayDelay;
+			currentNode.currentTimeInMinute += d;
+
+			//set next vehicle to subway too
+			vehicle = subway;
+		}
+	}
+	else
+	{
+
+		if(vehicle == taxi && disFromLastStation[v] > 3)
+		{
+			//change vehcile from first of line until now to subway
+			int currentLine = currentNode.lines.top();
+			int count{0};
+			while(!currentNode.lines.empty() && currentNode.lines.top() == currentLine
+				&& currentNode.vehicles.top() == taxi)
+			{
+				currentNode.vehicles.pop();
+				currentNode.lines.pop();
+				count++;
+			}
+
+			while(count--)
+			{
+				currentNode.vehicles.push(subway);
+				currentNode.lines.push(currentLine);
+			}
+
+			//change cost from first of line until now
+			int c = (disFromLastStation[v] - path.getSubwayAndTaxiDis()) * taxiCost;
+			currentNode.costUntilNow -= c;		
+			currentNode.costUntilNow += subwayCost;
+
+			//change duration from first of line until now
+			int d = (disFromLastStation[v] - path.getSubwayAndTaxiDis()) * taxiDuration + taxiDelay;
+			currentNode.currentTimeInMinute -= d;
+			d = (disFromLastStation[v] - path.getSubwayAndTaxiDis()) * subwayDuration + subwayDelay;
+			currentNode.currentTimeInMinute += d;
+
+			//set next vehicle to subway too
+			vehicle = subway;
+		}
+	}
 
 	//check if new path is better or not
 	if(vehicle == bus)
@@ -113,6 +226,8 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 DijkstraNode  TimeBaseNavigator::navigate(int src, int des, Clock startTime)
 {
 	DijkstraNode nodes[*stationsCount];
+	int disFromLastStation[*stationsCount]{0};
+	bool startInSubTraffic[*stationsCount]{0};
 
 	bool visited[*stationsCount];
 
@@ -137,7 +252,7 @@ DijkstraNode  TimeBaseNavigator::navigate(int src, int des, Clock startTime)
 			// Update node[v]
 			if (adjencencyMatrix[u][v] && !visited[v])
 			{
-				updateNode(u, v, nodes[u], nodes[v], startTime);
+				updateNode(u, v, nodes[u], nodes[v], startTime, disFromLastStation, startInSubTraffic);
 			}
 		}
 	}
