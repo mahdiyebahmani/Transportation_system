@@ -109,18 +109,6 @@ void TimeBaseNavigator::updateNode(int& u, int& v, DijkstraNode currentNode, Dij
 	else
 		disFromLastStation[v] += path.getSubwayAndTaxiDis();
 
-	if(u == 18 && v == 43)
-	{
-		cout << "taxiTotalDuration: " << taxiTotalDuration << " sub:" << subwayTotalDuration << " subTraffic: " << startInSubTraffic[u] << "disFromLastStartion: " << disFromLastStation[v] << endl;
-	}
-	if(u == 43 && v == 2)
-	{
-		cout << "taxiTotalDuration: " << taxiTotalDuration << " sub:" << subwayTotalDuration << " subTraffic: " << startInSubTraffic[u] << "disFromLastStartion: " << disFromLastStation[v] << endl;
-	}
-	if(u == 2 && v == 1)
-	{
-		cout << "taxiTotalDuration: " << taxiTotalDuration << " sub:" << subwayTotalDuration << " subTraffic: " << startInSubTraffic[u] << "disFromLastStartion: " << disFromLastStation[v] << endl;
-	}
 	if(startInSubTraffic[u])
 	{
 		if(vehicle == taxi && disFromLastStation[v] > 19)
